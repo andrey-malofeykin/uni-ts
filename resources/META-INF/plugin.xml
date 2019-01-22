@@ -1,0 +1,32 @@
+<idea-plugin>
+  <id>ru.uniteller.phpstorm.plugin.ts</id>
+  <name>Uniteller Test Stand</name>
+  <version>1.0</version>
+  <vendor email="a.malofeykin@uniteller.ru" url="https://www.uniteller.ru">Uniteller</vendor>
+
+  <description>Uniteller Test Stand Plugin.</description>
+
+  <change-notes>DEV</change-notes>
+
+  <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html for description -->
+  <idea-version since-build="173.0"/>
+
+  <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
+       on how to target different products -->
+  <!-- uncomment to enable plugin in all products
+  <depends>com.intellij.modules.lang</depends>
+  -->
+
+  <depends>com.jetbrains.php</depends>
+  <depends>com.intellij.modules.lang</depends>
+  <depends>com.intellij.modules.platform</depends>
+  <extensions defaultExtensionNs="com.intellij">
+    <fileBasedIndex implementation="ru.uniteller.phpstorm.plugin.ts.index.SubjectIndex"/>
+    <!-- Add your extensions here -->
+  </extensions>
+
+  <actions>
+    <!-- Add your actions here -->
+  </actions>
+
+</idea-plugin>
