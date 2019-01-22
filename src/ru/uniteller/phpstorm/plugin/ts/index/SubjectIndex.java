@@ -52,15 +52,15 @@ public class SubjectIndex extends FileBasedIndexExtension<String, SubjectIndex.S
         return 0;
     }
 
-    private static class SubjectExternalizer implements DataExternalizer<Subject> {
-        public synchronized void save(@NotNull DataOutput out, Subject value) throws IOException {
+    private static class SubjectExternalizer implements DataExternalizer<SubjectIndex.Subject> {
+        public synchronized void save(@NotNull DataOutput out, SubjectIndex.Subject value) throws IOException {
             out.writeUTF(value.getName());
             out.writeUTF(value.getClassName());
             out.writeUTF(value.getDescription());
             out.writeInt(value.getCommands().size());
 
             for (String commandName : value.getCommands().keySet()) {
-                Subject.Command command = value.getCommands().get(commandName);
+                SubjectIndex.Subject.Command command = value.getCommands().get(commandName);
 
                 out.writeUTF(command.getName());
                 out.writeUTF(command.getDescription());
@@ -68,7 +68,7 @@ public class SubjectIndex extends FileBasedIndexExtension<String, SubjectIndex.S
 
 
                 for (String argName : command.getArgs().keySet()) {
-                    Subject.Command.Arg arg = command.getArgs().get(argName);
+                    SubjectIndex.Subject.Command.Arg arg = command.getArgs().get(argName);
 
                     out.writeUTF(arg.getName());
                     out.writeUTF(arg.getDescription());
@@ -81,6 +81,7 @@ public class SubjectIndex extends FileBasedIndexExtension<String, SubjectIndex.S
         }
 
         public synchronized SubjectIndex.Subject read(@NotNull DataInput in) throws IOException {
+
             return new Subject();
         }
     }
@@ -111,25 +112,25 @@ public class SubjectIndex extends FileBasedIndexExtension<String, SubjectIndex.S
         /**
          * Имя субъекта
          */
-        String getName() {
+        public String getName() {
             return name;
         }
         /**
          * Имя класса субъекта
          */
-        String getClassName() {
+        public String getClassName() {
             return className;
         }
         /**
          * Описание субъекта
          */
-        String getDescription() {
+        public String getDescription() {
             return description;
         }
         /**
          * Команды субъекта
          */
-        Map<String, Command> getCommands() {
+        public Map<String, Command> getCommands() {
             return commands;
         }
 
@@ -154,20 +155,19 @@ public class SubjectIndex extends FileBasedIndexExtension<String, SubjectIndex.S
             /**
              * Имя команды
              */
-            String getName() {
+            public String getName() {
                 return name;
             }
             /**
              * Описание команды субъекта
              */
-            String getDescription() {
+            public String getDescription() {
                 return description;
             }
             /**
              * Аргументы команды субъекта
              */
-
-            Map<String, Arg> getArgs() {
+            public Map<String, Arg> getArgs() {
                 return args;
             }
 
@@ -210,27 +210,27 @@ public class SubjectIndex extends FileBasedIndexExtension<String, SubjectIndex.S
                 /**
                  * Имя аргумента команды
                  */
-                String getName() {
+                public String getName() {
                     return name;
                 }
 
                 /**
                  * Описание аргумента
                  */
-                String getDescription() {
+                public String getDescription() {
                     return description;
                 }
                 /**
                  * Порядковый номер аргумента
                  */
-                Integer getIndex() {
+                public Integer getIndex() {
                     return index;
                 }
 
                 /**
                  * Имя класса объекта
                  */
-                String getClassName() {
+                public String getClassName() {
                     return className;
                 }
             }
