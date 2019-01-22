@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="php-openapi">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/AppData/Local/JetBrains/Toolbox/apps/PhpStorm/ch-0/183.5153.36/plugins/php/lib/php-openapi.jar!/" />
+      <root url="jar://$USER_HOME$/AppData/Local/JetBrains/Toolbox/apps/PhpStorm/ch-0/183.5153.36/plugins/php/lib/php.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/AppData/Local/JetBrains/Toolbox/apps/PhpStorm/ch-0/183.5153.36/plugins/php/lib/php-openapi-src.jar!/" />
+    </SOURCES>
+  </library>
+</component>
