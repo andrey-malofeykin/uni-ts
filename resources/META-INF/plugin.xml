@@ -21,12 +21,19 @@
   <depends>com.intellij.modules.lang</depends>
   <depends>com.intellij.modules.platform</depends>
   <extensions defaultExtensionNs="com.intellij">
-    <fileBasedIndex implementation="ru.uniteller.phpstorm.plugin.ts.index.SubjectIndex"/>
+    <applicationService serviceInterface="ru.uniteller.phpstorm.plugin.ts.service.Config"
+                        serviceImplementation="ru.uniteller.phpstorm.plugin.ts.service.Config"/>
     <!-- Add your extensions here -->
   </extensions>
 
   <actions>
     <!-- Add your actions here -->
   </actions>
+
+  <project-components>
+    <component>
+      <implementation-class>ru.uniteller.phpstorm.plugin.ts.component.TestStandComponent</implementation-class>
+    </component>
+  </project-components>
 
 </idea-plugin>
