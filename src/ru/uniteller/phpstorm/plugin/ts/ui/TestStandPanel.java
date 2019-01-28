@@ -9,6 +9,7 @@ import ru.uniteller.phpstorm.plugin.ts.service.Config;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.ScrollPaneFactory;
+import ru.uniteller.phpstorm.plugin.ts.ui.subjectTree.DescriptionProvider;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -42,9 +43,9 @@ public class TestStandPanel extends JBTabbedPane {
                 return;
             }
             DefaultMutableTreeNode node = (DefaultMutableTreeNode) e.getPath().getLastPathComponent();
-            if (node.getUserObject() instanceof SubjectsTreeStructure.SubjectNode) {
-                SubjectsTreeStructure.SubjectNode subject = (SubjectsTreeStructure.SubjectNode) node.getUserObject();
-                docPanel.setText(subject.getDescription());
+            Object userObj = node.getUserObject();
+            if (userObj instanceof DescriptionProvider) {
+                docPanel.setText(((DescriptionProvider) userObj).getDescriptionSource());
             } else {
                 docPanel.setText("");
             }
@@ -52,7 +53,7 @@ public class TestStandPanel extends JBTabbedPane {
         });
 
         myTree.setRootVisible(true);
-        SubjectsTreeStructure treeStructure = new SubjectsTreeStructure(project, config, myTree);
+        new SubjectsTreeStructure(project, config, myTree);
 
 
 
