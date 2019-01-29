@@ -8,23 +8,24 @@ import com.jetbrains.php.lang.documentation.phpdoc.PhpDocUtil;
 import com.jetbrains.php.lang.psi.elements.PhpClass;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Optional;
 
-public class SubjectObject extends NamedNode implements DescriptionProvider {
-    private String objClass;
+public class SubjectObject extends AbstractSubjectObject implements DescriptionProvider {
     private String objName = "";
     private String objDescription = "";
 
     SubjectObject(SubjectNode.SubjectObjects aParent, String name, String objClass) {
-        super(aParent, name);
-        this.objClass = objClass;
+        super(aParent, name, objClass);
         initObject();
         updatePresentation();
     }
 
     private void initObject() {
+        if (null == objClass) {
+            return;
+        }
+
         @NotNull PhpIndex index = PhpIndex.getInstance(Objects.requireNonNull(getProject()));
         Optional<PhpClass> objOpt = index.getClassesByFQN(objClass).stream().findFirst();
         if (!objOpt.isPresent()) {
@@ -54,25 +55,7 @@ public class SubjectObject extends NamedNode implements DescriptionProvider {
 
     @Override
     protected SimpleNode[] buildChildren() {
-        @NotNull PhpIndex index = PhpIndex.getInstance(Objects.requireNonNull(getProject()));
-        Optional<PhpClass> objOpt = index.getClassesByFQN(objClass).stream().findFirst();
-        if (!objOpt.isPresent()) {
-            return new PropertyObject[0];
-        }
-        PhpClass objClass = objOpt.get();
-
-        ArrayList<PropertyObject> propertyObjects = new ArrayList<>();
-        objClass.getFields().forEach(propertyObject -> {
-            if (PropertyObject.isPropertyObject(propertyObject)) {
-                propertyObjects.add(new PropertyObject(this, propertyObject));
-            }
-
-        });
-
-
-
-
-        return propertyObjects.toArray(new PropertyObject[0]);
+        return super.buildChildren();
     }
 
     @Override
