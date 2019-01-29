@@ -1,5 +1,7 @@
 package ru.uniteller.phpstorm.plugin.ts.ui.subjectTree;
 
+import com.intellij.ide.projectView.PresentationData;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.jetbrains.php.PhpIndex;
 import com.jetbrains.php.lang.psi.elements.PhpClass;
@@ -14,7 +16,16 @@ public class RootNode extends NamedNode {
 
 
     public RootNode(Project project, Config config) {
+
         super(project, config, "Root");
+        updatePresentation();
+    }
+
+    private void updatePresentation() {
+        PresentationData presentation = getPresentation();
+        presentation.clear();
+        presentation.addText("Субъекты", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        update(presentation);
     }
 
     @Override
