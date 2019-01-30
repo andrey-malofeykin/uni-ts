@@ -37,7 +37,7 @@ class ObjectConstant extends NamedNode implements DescriptionProvider{
                 constantName = constantName + ". " + phpDocComment.replaceAll("<.*?>", "");
             } else {
                 constantName =  constantName + ". " + phpDocComment.substring(0, endFirstLine).replaceAll("<.*?>", "");
-                constantDescription = phpDocComment.substring(endFirstLine + 1);
+                constantDescription = constantDescription + phpDocComment.substring(endFirstLine + 1);
             }
         }
     }

@@ -2,12 +2,23 @@ package ru.uniteller.phpstorm.plugin.ts.ui.subjectTree;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.jetbrains.php.PhpIndex;
+import com.jetbrains.php.lang.documentation.PhpDocMethodSource;
 import com.jetbrains.php.lang.documentation.phpdoc.PhpDocUtil;
+import com.jetbrains.php.lang.documentation.phpdoc.lexer.PhpDocTokenTypes;
+import com.jetbrains.php.lang.documentation.phpdoc.psi.PhpDocComment;
+import com.jetbrains.php.lang.documentation.phpdoc.psi.PhpDocMethodTag;
+import com.jetbrains.php.lang.documentation.phpdoc.psi.PhpDocRef;
+import com.jetbrains.php.lang.documentation.phpdoc.psi.impl.tags.PhpDocTagImpl;
+import com.jetbrains.php.lang.psi.elements.Method;
 import com.jetbrains.php.lang.psi.elements.PhpClass;
+import com.jetbrains.php.lang.psi.elements.PhpPsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import ru.uniteller.phpstorm.plugin.ts.util.PhpIndexUtil;
 
 import java.util.*;
@@ -126,6 +137,7 @@ public class SubjectNode extends NamedNode implements DescriptionProvider{
                     return;
                 }
 
+
                 objectNodes.add(new SubjectObject(this, objClass.getName(), objClass.getFQN()));
 
             });
@@ -142,6 +154,76 @@ public class SubjectNode extends NamedNode implements DescriptionProvider{
             updatePresentation();
         }
 
+
+        @Override
+        protected SimpleNode[] buildChildren() {
+            String subjectInterfaceFqn = subjectClassFQN + "Interface";
+
+            HashMap<String, SubjectCommand> subjectCommands = new HashMap<>();
+
+            PhpIndex index = Objects.requireNonNull(getProject()).getComponent(PhpIndex.class);
+            @NotNull Collection<PhpClass> subjectInterfaces = index.getInterfacesByFQN(subjectInterfaceFqn);
+
+            subjectInterfaces.forEach(subjectInterface -> {
+                @Nullable PhpDocComment docComment = subjectInterface.getDocComment();
+                if (null == docComment) {
+                    return;
+                }
+                Arrays.stream(docComment.getTagElementsByName(PhpDocUtil.SEE_TAG)).forEach(seeTag -> {
+                    @Nullable PhpPsiElement prevTag = seeTag.getPrevPsiSibling();
+                    if (!(prevTag instanceof PhpDocMethodTag)) {
+                        return;
+                    }
+                    Optional<PsiElement> linkOptional = Arrays.stream(seeTag.getChildren()).filter(seeTagPart -> seeTagPart instanceof PhpDocRef).findFirst();
+                    if (!linkOptional.isPresent()) {
+                        return;
+                    }
+                    @NotNull PsiReference[] references = (linkOptional.get()).getReferences();
+
+                    if (2 != references.length) {
+                        return;
+                    }
+                    @Nullable Method method = (Method)references[1].resolve();
+                    if (null == method) {
+                        return;
+                    }
+                    @Nullable PhpClass methodClass = method.getContainingClass();
+                    if (null == methodClass) {
+                        return;
+                    }
+                    if (null != subjectCommands.get(method.getName())) {
+                        return;
+                    }
+
+                    String commandName = methodClass.getFQN() + ":" + methodClass.getName();
+
+                    //@TODO com.jetbrains.php.lang.documentation.PhpDocMethodSource - попробовать заиспользоваь это решение
+                    for (@NotNull PsiElement commandNamePart: prevTag.getChildren()) {
+                        if (commandNamePart.getNode().getElementType().toString().equals("DOC_METHOD_DESCR")) {
+                            commandName = commandNamePart.getText();
+                            break;
+                        }
+
+                    }
+
+
+                    SubjectCommand.CommandData commandData = new SubjectCommand.CommandData(
+                            commandName,
+                            methodClass.getFQN(),
+                            methodClass.getName()
+                    );
+
+                    subjectCommands.put(method.getName(), new SubjectCommand(this, prevTag.getName(), commandData));
+
+                });
+            });
+
+
+            return subjectCommands.values().toArray(new SubjectCommand[0]);
+        }
+
+
+
         private void updatePresentation() {
             PresentationData presentation = getPresentation();
             presentation.clear();
@@ -149,9 +231,5 @@ public class SubjectNode extends NamedNode implements DescriptionProvider{
             update(presentation);
         }
 
-        @Override
-        protected SimpleNode[] buildChildren() {
-            return new SimpleNode[]{};
-        }
     }
 }
