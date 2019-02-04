@@ -10,10 +10,12 @@ import com.jetbrains.php.PhpIndex;
 import com.jetbrains.php.lang.documentation.PhpDocMethodSource;
 import com.jetbrains.php.lang.documentation.phpdoc.PhpDocUtil;
 import com.jetbrains.php.lang.documentation.phpdoc.lexer.PhpDocTokenTypes;
+import com.jetbrains.php.lang.documentation.phpdoc.parser.PhpDocElementTypes;
 import com.jetbrains.php.lang.documentation.phpdoc.psi.PhpDocComment;
 import com.jetbrains.php.lang.documentation.phpdoc.psi.PhpDocMethodTag;
 import com.jetbrains.php.lang.documentation.phpdoc.psi.PhpDocRef;
 import com.jetbrains.php.lang.documentation.phpdoc.psi.impl.tags.PhpDocTagImpl;
+import com.jetbrains.php.lang.psi.PhpPsiUtil;
 import com.jetbrains.php.lang.psi.elements.Method;
 import com.jetbrains.php.lang.psi.elements.PhpClass;
 import com.jetbrains.php.lang.psi.elements.PhpPsiElement;
@@ -197,20 +199,19 @@ public class SubjectNode extends NamedNode implements DescriptionProvider{
 
                     String commandName = methodClass.getFQN() + ":" + methodClass.getName();
 
-                    //@TODO com.jetbrains.php.lang.documentation.PhpDocMethodSource - попробовать заиспользоваь это решение
-                    for (@NotNull PsiElement commandNamePart: prevTag.getChildren()) {
-                        if (commandNamePart.getNode().getElementType().toString().equals("DOC_METHOD_DESCR")) {
-                            commandName = commandNamePart.getText();
-                            break;
-                        }
+                    PsiElement docMethodLastPart = prevTag.getLastChild();
 
+
+                    if (PhpPsiUtil.isOfType(docMethodLastPart, PhpDocElementTypes.DOC_METHOD_DESCRIPTION)) {
+                        commandName = docMethodLastPart.getText();
                     }
+
 
 
                     SubjectCommand.CommandData commandData = new SubjectCommand.CommandData(
                             commandName,
                             methodClass.getFQN(),
-                            methodClass.getName()
+                            method.getName()
                     );
 
                     subjectCommands.put(method.getName(), new SubjectCommand(this, prevTag.getName(), commandData));

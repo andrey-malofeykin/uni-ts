@@ -6,12 +6,14 @@ import com.intellij.ui.treeStructure.SimpleNode;
 import com.jetbrains.php.PhpIndex;
 import com.jetbrains.php.lang.documentation.phpdoc.PhpDocUtil;
 import com.jetbrains.php.lang.psi.elements.Method;
+import com.jetbrains.php.lang.psi.elements.Parameter;
 import com.jetbrains.php.lang.psi.elements.PhpClass;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import ru.uniteller.phpstorm.plugin.ts.util.PhpIndexUtil;
 
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Stream;
 
 public class SubjectCommand extends NamedNode implements DescriptionProvider {
     private String commandName = "";
@@ -68,9 +70,40 @@ public class SubjectCommand extends NamedNode implements DescriptionProvider {
         update(presentation);
     }
 
+
     @Override
     protected SimpleNode[] buildChildren() {
-        return new SimpleNode[0];
+        PhpIndex  index = Objects.requireNonNull(getProject()).getComponent(PhpIndex.class);
+
+        ArrayList<CommandParam> commandParams = new ArrayList<>();
+
+
+        index.getClassesByFQN(commandClassFqn).forEach(commandClass -> {
+            @Nullable Method method = commandClass.findMethodByName(commandMethod);
+            if (null == method) {
+                return;
+            }
+            int paramIndex = 0;
+            for (Parameter param: method.getParameters()) {
+                paramIndex++;
+
+                if (1 == paramIndex && !isDomainParam(param)) {
+                    break;
+                }
+
+                commandParams.add(new CommandParam(this, param));
+            }
+
+
+
+        });
+
+        return commandParams.toArray(new CommandParam[0]);
+
+    }
+
+    private boolean isDomainParam(Parameter param) {
+        return param.getType().toString().equals("\\TestSrv\\Lib\\Domain\\DomainInterface");
     }
 
     @Override
@@ -78,26 +111,26 @@ public class SubjectCommand extends NamedNode implements DescriptionProvider {
         return commandDescription;
     }
 
-    public static class CommandData {
+    static class CommandData {
         private String commandName = "";
         private String commandClassFqn;
         private String commandMethod;
 
-        public CommandData(String commandName, String commandClassFqn, String commandMethod) {
+        CommandData(String commandName, String commandClassFqn, String commandMethod) {
             this.commandName = commandName;
             this.commandClassFqn = commandClassFqn;
             this.commandMethod = commandMethod;
         }
 
-        public String getCommandName() {
+        String getCommandName() {
             return commandName;
         }
 
-        public String getCommandClassFqn() {
+        String getCommandClassFqn() {
             return commandClassFqn;
         }
 
-        public String getCommandMethod() {
+        String getCommandMethod() {
             return commandMethod;
         }
     }
