@@ -96,7 +96,10 @@ public class ChangeDomainCommand extends NamedNode implements DescriptionProvide
                 paramIndex++;
 
                 if (1 == paramIndex && !isDomainParam(param)) {
-                    break;
+                    if (!isDomainParam(param)) {
+                        break;
+                    }
+                    continue;
                 }
 
                 commandParams.add(new CommandParam(this, param));
