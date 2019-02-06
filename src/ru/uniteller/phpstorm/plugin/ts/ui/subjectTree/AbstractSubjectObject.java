@@ -14,7 +14,6 @@ import java.util.HashMap;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Stream;
 
 abstract class AbstractSubjectObject extends NamedNode implements DescriptionProvider {
     String objClass;

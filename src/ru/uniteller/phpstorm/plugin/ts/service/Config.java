@@ -20,6 +20,11 @@ public class Config {
     private String objInterface = "\\TestSrv\\Lib\\Domain\\ObjectInterface";
 
     /**
+     * Интерфейс который реализуют классы доменов субъектов
+     */
+    private String domainInterface = "\\TestSrv\\Lib\\Domain\\DomainInterface";
+
+    /**
      * Имя интерфеса который должны реализовывать все субъекты
      */
     public String getSubjectInterfaceFQN() {
@@ -38,5 +43,12 @@ public class Config {
      */
     public String getObjInterface() {
         return objInterface;
+    }
+
+    /**
+     * Интерфейс который реализуют классы доменов субъектов
+     */
+    public String getDomainInterface() {
+        return domainInterface;
     }
 }

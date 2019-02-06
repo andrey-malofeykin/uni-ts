@@ -4,16 +4,10 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.SimpleNode;
-import com.jetbrains.php.PhpIndex;
-import com.jetbrains.php.lang.documentation.phpdoc.PhpDocUtil;
 import com.jetbrains.php.lang.documentation.phpdoc.parser.PhpDocElementTypes;
 import com.jetbrains.php.lang.documentation.phpdoc.psi.tags.PhpDocParamTag;
 import com.jetbrains.php.lang.psi.PhpPsiUtil;
-import com.jetbrains.php.lang.psi.elements.PhpClass;
-import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
-import java.util.Optional;
 import com.jetbrains.php.lang.psi.elements.Parameter;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +17,7 @@ public class CommandParam extends AbstractSubjectObject implements DescriptionPr
     private String paramDescription = "";
 
 
-    CommandParam(SubjectCommand aParent, Parameter param) {
+    CommandParam(ChangeDomainCommand aParent, Parameter param) {
         super(aParent, param.getName(), null);
         initObject(param);
         updatePresentation();

@@ -6,7 +6,7 @@ import ru.uniteller.phpstorm.plugin.ts.service.Config;
 
 abstract public class NamedNode extends CachingSimpleNode{
     final Config config;
-    NamedNode(NamedNode aParent, String name) {
+    public NamedNode(NamedNode aParent, String name) {
         super(aParent);
         myName = name;
         this.config = aParent.config;

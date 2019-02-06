@@ -10,28 +10,36 @@ import com.jetbrains.php.lang.psi.elements.Parameter;
 import com.jetbrains.php.lang.psi.elements.PhpClass;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import ru.uniteller.phpstorm.plugin.ts.util.PhpIndexUtil;
 
-import java.util.*;
-import java.util.stream.Stream;
+import java.util.ArrayList;
+import java.util.Objects;
+import java.util.Optional;
 
-public class SubjectCommand extends NamedNode implements DescriptionProvider {
+public class ReadDomainCommand extends NamedNode implements DescriptionProvider {
     private String commandName = "";
     private String commandDescription = "";
     private String commandClassFqn;
     private String commandMethod;
 
-    SubjectCommand(SubjectNode.SubjectCommands aParent, String name, CommandData data) {
-        super(aParent, name);
-        this.commandClassFqn = data.getCommandClassFqn();
-        this.commandMethod = data.getCommandMethod();
-        this.commandName = data.getCommandName();
+    ReadDomainCommand(SubjectCommandCollection aParent,  SubjectCommandCollection.ReadDomainCommandData data) {
+        super(aParent, data.getMethodName());
+        if (null != data.getCommandName()) {
+            this.commandName = data.getCommandName();
+        }
         initObject();
         updatePresentation();
     }
 
     private void initObject() {
         if (null == commandClassFqn || null == commandMethod) {
+            return;
+        }
+        initCommandName();
+    }
+
+
+    private void initCommandName() {
+        if (null != commandName) {
             return;
         }
 
@@ -91,7 +99,7 @@ public class SubjectCommand extends NamedNode implements DescriptionProvider {
                     break;
                 }
 
-                commandParams.add(new CommandParam(this, param));
+                //commandParams.add(new CommandParam(this, param));
             }
 
 
@@ -103,7 +111,7 @@ public class SubjectCommand extends NamedNode implements DescriptionProvider {
     }
 
     private boolean isDomainParam(Parameter param) {
-        return param.getType().toString().equals("\\TestSrv\\Lib\\Domain\\DomainInterface");
+        return param.getType().toString().equals(config.getDomainInterface());
     }
 
     @Override
@@ -112,17 +120,17 @@ public class SubjectCommand extends NamedNode implements DescriptionProvider {
     }
 
     static class CommandData {
-        private String commandName = "";
+        private @Nullable String  commandName;
         private String commandClassFqn;
         private String commandMethod;
 
-        CommandData(String commandName, String commandClassFqn, String commandMethod) {
+        CommandData(@Nullable String commandName, String commandClassFqn, String commandMethod) {
             this.commandName = commandName;
             this.commandClassFqn = commandClassFqn;
             this.commandMethod = commandMethod;
         }
 
-        String getCommandName() {
+        @Nullable String getCommandName() {
             return commandName;
         }
 

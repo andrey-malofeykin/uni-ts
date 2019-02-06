@@ -15,7 +15,7 @@ public class SubjectObject extends AbstractSubjectObject implements DescriptionP
     private String objName = "";
     private String objDescription = "";
 
-    SubjectObject(SubjectNode.SubjectObjects aParent, String name, String objClass) {
+    SubjectObject(SubjectObjectCollection aParent, String name, String objClass) {
         super(aParent, name, objClass);
         initObject();
         updatePresentation();
