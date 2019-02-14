@@ -3,7 +3,6 @@ package ru.uniteller.phpstorm.plugin.ts.ui.subjectTree;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.SimpleNode;
-import com.jetbrains.php.PhpIndex;
 import com.jetbrains.php.lang.psi.elements.Field;
 import com.jetbrains.php.lang.psi.elements.PhpClass;
 import com.jetbrains.php.lang.psi.resolve.types.PhpType;
@@ -11,34 +10,29 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 
-abstract class AbstractSubjectObject extends NamedNode implements DescriptionProvider {
-    String objClass;
+public abstract class AbstractObjectNode extends NamedNode implements DescriptionProvider {
+    private String objClass;
 
-    AbstractSubjectObject(NamedNode aParent, String name, @Nullable String objClass) {
+    public AbstractObjectNode(NamedNode aParent, String name, @Nullable String objClass) {
         super(aParent, name);
         this.objClass = objClass;
     }
 
-    AbstractSubjectObject(AbstractSubjectObject aParent, Field property) {
+
+    void setObjClass(String objClass) {
+        this.objClass = objClass;
+    }
+
+
+    AbstractObjectNode(AbstractObjectNode aParent, Field property) {
         this(aParent, property.getName(), null);
-
-
-        if (property.getName().equals("lines")) {
-            String hhh = "d";
-        }
 
         @NotNull PhpType docType = property.getDocType();
         if (docType.isNotExtendablePrimitiveType()) {
             return;
         }
-
-        PhpIndex index = Objects.requireNonNull(getProject()).getComponent(PhpIndex.class);
-
-        @NotNull Set<String> types = docType.getTypes();
 
         Optional<String> typeOpt = docType.getTypes().stream().findFirst();
         if (!typeOpt.isPresent()) {
@@ -50,7 +44,7 @@ abstract class AbstractSubjectObject extends NamedNode implements DescriptionPro
         typeProperty = typeProperty.replaceAll("\\[ *] *$", "");
 
 
-        if (!index.getAnyByFQN(typeProperty).stream().findFirst().isPresent()) {
+        if (!phpIndex.getAnyByFQN(typeProperty).stream().findFirst().isPresent()) {
             return;
         }
         this.objClass = typeProperty;
@@ -64,25 +58,24 @@ abstract class AbstractSubjectObject extends NamedNode implements DescriptionPro
             return new SimpleNode[]{};
         }
 
-        @NotNull PhpIndex index = PhpIndex.getInstance(Objects.requireNonNull(getProject()));
-        Optional<PhpClass> objOpt = index.getClassesByFQN(objClass).stream().findFirst();
+        Optional<PhpClass> objOpt = phpIndex.getClassesByFQN(objClass).stream().findFirst();
         if (!objOpt.isPresent()) {
-            return new ObjectProperty[0];
+            return  new SimpleNode[]{};
         }
         PhpClass objClass = objOpt.get();
 
-        HashMap<String, ObjectProperty> objectProperties = new HashMap<>();
+        HashMap<String, ObjectNodeProperty> objectProperties = new HashMap<>();
         HashMap<String, ObjectConstant> objectConstants = new HashMap<>();
 
         buildData(objClass, objectProperties, objectConstants);
 
         return new SimpleNode[]{
                 new Constants(this, objectConstants.values().toArray(new ObjectConstant[0])),
-                new Properties(this, objectProperties.values().toArray(new ObjectProperty[0])),
+                new Properties(this, objectProperties.values().toArray(new ObjectNodeProperty[0])),
         };
     }
 
-    private void buildData(PhpClass phpClass, HashMap<String, ObjectProperty> objectProperties, HashMap<String, ObjectConstant> objectConstants) {
+    private void buildData(PhpClass phpClass, HashMap<String, ObjectNodeProperty> objectProperties, HashMap<String, ObjectConstant> objectConstants) {
         phpClass.getFields().forEach(propertyObject -> {
             String propertyName = propertyObject.getName();
 
@@ -92,8 +85,8 @@ abstract class AbstractSubjectObject extends NamedNode implements DescriptionPro
 
             if (propertyObject.isConstant()) {
                 objectConstants.put(propertyName, new ObjectConstant(this, propertyObject));
-            } else if (ObjectProperty.isPropertyObject(propertyObject)) {
-                objectProperties.put(propertyName, new ObjectProperty(this, propertyObject));
+            } else if (ObjectNodeProperty.isPropertyObject(propertyObject)) {
+                objectProperties.put(propertyName, new ObjectNodeProperty(this, propertyObject));
             }
         });
 
@@ -112,9 +105,9 @@ abstract class AbstractSubjectObject extends NamedNode implements DescriptionPro
     }
 
     class Properties extends NamedNode {
-        ObjectProperty[] objectProperties;
+        ObjectNodeProperty[] objectProperties;
 
-        Properties(NamedNode aParent, ObjectProperty[] objectProperties) {
+        Properties(NamedNode aParent, ObjectNodeProperty[] objectProperties) {
             super(aParent, "properties");
             this.objectProperties = objectProperties;
             updatePresentation();

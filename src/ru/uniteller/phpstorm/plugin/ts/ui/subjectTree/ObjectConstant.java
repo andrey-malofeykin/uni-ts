@@ -12,7 +12,7 @@ class ObjectConstant extends NamedNode implements DescriptionProvider{
     private String constantName;
     private String constantDescription = "";
 
-    ObjectConstant(AbstractSubjectObject aParent, Field property) {
+    ObjectConstant(AbstractObjectNode aParent, Field property) {
         super(aParent, property.getName());
         initProperty(property);
         updatePresentation();

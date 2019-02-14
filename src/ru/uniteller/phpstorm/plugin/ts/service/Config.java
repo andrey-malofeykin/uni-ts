@@ -1,9 +1,26 @@
 package ru.uniteller.phpstorm.plugin.ts.service;
 
+import java.util.regex.Pattern;
+
 /**
  * Настройки плагина
  */
 public class Config {
+    /**
+     * Имя группы в шаблоне для получения имени субъекта
+     * @see Config#patternObjInfo
+     */
+    private String subjectGroupName =  "SUBJECT";
+    /**
+     * Имя группы в шаблоне для получения имени объекта
+     * @see Config#patternObjInfo
+     */
+    private String objGroupName =  "OBJ";
+
+    /**
+     * Шаблон для получения имени субъекта и объекта из FQN объекта
+     */
+    private Pattern patternObjInfo = Pattern.compile("\\\\TestSrv\\\\Subject\\\\(?<SUBJECT>.+)\\\\Object\\\\(?<OBJ>.+)");
     /**
      * Имя интерфеса который должны реализовывать все субъекты
      */
@@ -50,5 +67,26 @@ public class Config {
      */
     public String getDomainInterface() {
         return domainInterface;
+    }
+
+    /**
+     * Имя группы в шаблоне для получения имени субъекта
+     * @see Config#patternObjInfo
+     */
+    public String getSubjectGroupName() {
+        return subjectGroupName;
+    }
+    /**
+     * Имя группы в шаблоне для получения имени объекта
+     * @see Config#patternObjInfo
+     */
+    public String getObjGroupName() {
+        return objGroupName;
+    }
+    /**
+     * Шаблон для получения имени субъекта и объекта из FQN объекта
+     */
+    public Pattern getPatternObjInfo() {
+        return patternObjInfo;
     }
 }

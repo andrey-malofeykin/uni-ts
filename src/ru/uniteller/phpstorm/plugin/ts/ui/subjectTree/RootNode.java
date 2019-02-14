@@ -1,23 +1,24 @@
 package ru.uniteller.phpstorm.plugin.ts.ui.subjectTree;
 
 import com.intellij.ide.projectView.PresentationData;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.jetbrains.php.PhpIndex;
 import com.jetbrains.php.lang.psi.elements.PhpClass;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import ru.uniteller.phpstorm.plugin.ts.service.Config;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Objects;
 
-import com.intellij.openapi.project.Project;
+import java.util.Collection;
+import java.util.HashMap;
 
 public class RootNode extends NamedNode {
-
+    private HashMap<String, SubjectNode> hashMapSubjects = new HashMap<>();
 
     public RootNode(Project project, Config config) {
 
-        super(project, config, "Root");
+        super(project, config, "Субъекты");
         updatePresentation();
     }
 
@@ -30,19 +31,22 @@ public class RootNode extends NamedNode {
 
     @Override
     final protected SimpleNode[] buildChildren() {
-        Project project = getProject();
-        PhpIndex phpIndex = PhpIndex.getInstance(Objects.requireNonNull(project));
+        hashMapSubjects.clear();
 
         Collection<PhpClass> subjInterfaces = phpIndex.getInterfacesByFQN(config.getSubjectInterfaceFQN());
 
-        ArrayList<SubjectNode> subjectNodes = new ArrayList<>();
         subjInterfaces.forEach(subjInterface -> phpIndex.getAllSubclasses(subjInterface.getFQN()).forEach(subjectClass -> {
             if (isSubjectClass(subjectClass)) {
-                subjectNodes.add(new SubjectNode(this, subjectClass));
+                SubjectNode subjectNode = new  SubjectNode(this, subjectClass);
+                hashMapSubjects.put(subjectNode.getSubjectShortName(), subjectNode);
             }
         }));
 
-        return subjectNodes.toArray(new SimpleNode[0]);
+        return hashMapSubjects.values().toArray(new SimpleNode[0]);
+    }
+
+    public @Nullable SubjectNode getSubject(@NotNull String name) {
+        return hashMapSubjects.get(name);
     }
 
     /**

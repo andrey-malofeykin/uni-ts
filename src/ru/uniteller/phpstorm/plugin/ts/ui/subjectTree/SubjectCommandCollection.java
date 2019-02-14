@@ -5,23 +5,22 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.SimpleNode;
-import com.jetbrains.php.PhpIndex;
 import com.jetbrains.php.lang.documentation.PhpDocLinkResolver;
 import com.jetbrains.php.lang.documentation.PhpDocMethodSource;
-import com.jetbrains.php.lang.documentation.phpdoc.parser.PhpDocElementTypes;
 import com.jetbrains.php.lang.documentation.phpdoc.psi.PhpDocComment;
 import com.jetbrains.php.lang.documentation.phpdoc.psi.PhpDocMethod;
 import com.jetbrains.php.lang.documentation.phpdoc.psi.PhpDocMethodTag;
 import com.jetbrains.php.lang.documentation.phpdoc.psi.PhpDocRef;
-import com.jetbrains.php.lang.documentation.phpdoc.psi.tags.PhpDocTag;
-import com.jetbrains.php.lang.psi.PhpPsiUtil;
 import com.jetbrains.php.lang.psi.elements.Method;
 import com.jetbrains.php.lang.psi.elements.PhpClass;
 import com.jetbrains.php.lang.psi.elements.PhpClassMember;
 import com.jetbrains.php.lang.psi.elements.PhpPsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import java.util.*;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 
 
 class SubjectCommandCollection extends NamedNode {
@@ -45,8 +44,7 @@ class SubjectCommandCollection extends NamedNode {
         HashMap<String, ChangeDomainCommand> changeDomainCommands = new HashMap<>();
         HashMap<String, ReadDomainCommand> readDomainCommands = new HashMap<>();
 
-        PhpIndex index = Objects.requireNonNull(getProject()).getComponent(PhpIndex.class);
-        @NotNull Collection<PhpClass> subjectInterfaces = index.getInterfacesByFQN(subjectInterfaceFqn);
+        @NotNull Collection<PhpClass> subjectInterfaces = phpIndex.getInterfacesByFQN(subjectInterfaceFqn);
 
         subjectInterfaces.forEach(subjectInterface -> {
             @Nullable PhpDocComment docComment = subjectInterface.getDocComment();
@@ -66,7 +64,7 @@ class SubjectCommandCollection extends NamedNode {
         });
 
 
-        ArrayList<NamedNode> namedNodes = new ArrayList<NamedNode>();
+        ArrayList<NamedNode> namedNodes = new ArrayList<>();
         if (readDomainCommands.size() > 0) {
             namedNodes.add(new ReadDomainCollection((SubjectNode)getParent(), readDomainCommands.values().toArray(new ReadDomainCommand[0])));
         }
@@ -149,15 +147,11 @@ class SubjectCommandCollection extends NamedNode {
             this.phpDocMethod = phpDocMethod;
         }
 
-        public String getCommandName() {
+        String getCommandName() {
             return commandName;
         }
 
-        public PhpDocMethod getPhpDocMethod() {
-            return phpDocMethod;
-        }
-
-        public String getMethodName() {
+        String getMethodName() {
             return methodName;
         }
     }
@@ -176,7 +170,7 @@ class SubjectCommandCollection extends NamedNode {
             this.classMethod = classMethod;
         }
 
-        public Method getClassMethod() {
+        Method getClassMethod() {
             return classMethod;
         }
     }

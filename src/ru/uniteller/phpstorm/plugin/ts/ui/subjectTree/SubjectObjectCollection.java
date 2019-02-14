@@ -6,10 +6,8 @@ import com.intellij.ui.treeStructure.SimpleNode;
 import com.jetbrains.php.lang.psi.elements.PhpClass;
 import org.jetbrains.annotations.NotNull;
 import ru.uniteller.phpstorm.plugin.ts.util.PhpIndexUtil;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Objects;
+
+import java.util.*;
 import java.util.stream.Stream;
 
 
@@ -19,9 +17,13 @@ class SubjectObjectCollection extends NamedNode {
      */
     private String subjectClassFQN;
 
-    SubjectObjectCollection(SubjectNode aParent) {
-        super(aParent, "objects");
+    private HashMap<String, ObjectNode> subjectObjectStorage;
+
+
+    SubjectObjectCollection(SubjectNode aParent, HashMap<String, ObjectNode> subjectObjectStorage) {
+        super(aParent, "Объекты");
         subjectClassFQN = aParent.getSubjectClassFQN();
+        this.subjectObjectStorage = subjectObjectStorage;
         updatePresentation();
     }
 
@@ -35,10 +37,9 @@ class SubjectObjectCollection extends NamedNode {
     @Override
     protected SimpleNode[] buildChildren() {
         String objNamespace = subjectClassFQN + "\\Object";
+        subjectObjectStorage.clear();
 
         @NotNull Collection<PhpClass> objClasses = PhpIndexUtil.getPhpClassInsideNamespace(Objects.requireNonNull(getProject()), objNamespace);
-
-        ArrayList<SubjectObject> objectNodes = new ArrayList<>();
 
         objClasses.forEach(objClass -> {
             if (objClass.isAbstract() || objClass.isInterface() || objClass.isTrait()) {
@@ -56,12 +57,12 @@ class SubjectObjectCollection extends NamedNode {
                 return;
             }
 
-
-            objectNodes.add(new SubjectObject(this, objClass.getName(), objClass.getFQN()));
+            ObjectNode subjectObject = new ObjectNode(this, objClass);
+            subjectObjectStorage.put(subjectObject.getObjectShortName(), subjectObject);
 
         });
 
 
-        return objectNodes.toArray(new SubjectObject[0]);
+        return subjectObjectStorage.values().toArray(new ObjectNode[0]);
     }
 }

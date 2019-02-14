@@ -4,11 +4,11 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.SimpleNode;
-import com.jetbrains.php.PhpIndex;
 import com.jetbrains.php.lang.documentation.phpdoc.PhpDocUtil;
 import com.jetbrains.php.lang.psi.elements.PhpClass;
-import org.jetbrains.annotations.NotNull;
-import java.util.Objects;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.HashMap;
 import java.util.Optional;
 
 public class SubjectNode extends NamedNode implements DescriptionProvider{
@@ -21,23 +21,33 @@ public class SubjectNode extends NamedNode implements DescriptionProvider{
      */
     private String description = "";
 
+    private String subjectShortName;
     /**
      * Имя субъекта
      */
     private String subjectClassFQN;
 
+    private HashMap<String, ObjectNode> subjectObjectStorage = new HashMap<>();
+
     SubjectNode(NamedNode aParent, PhpClass subjectClass) {
         super(aParent, subjectClass.getName());
+        this.subjectShortName = subjectClass.getName();
         this.subjectClassFQN = subjectClass.getFQN();
         initSubjectNode(subjectClass);
         myClosedIcon = AllIcons.General.BalloonInformation;
         updatePresentation();
     }
 
+    String getSubjectShortName() {
+        return subjectShortName;
+    }
+
+    @Nullable public ObjectNode getSubjectObject(String objName) {
+        return subjectObjectStorage.get(objName);
+    }
 
     private void initSubjectNode(PhpClass subjectClass) {
-        @NotNull PhpIndex index = PhpIndex.getInstance(Objects.requireNonNull(getProject()));
-        Optional<PhpClass> subjInterfaceOpt = index.getInterfacesByFQN(subjectClass.getFQN() + "Interface").stream().findFirst();
+        Optional<PhpClass> subjInterfaceOpt = phpIndex.getInterfacesByFQN(subjectClass.getFQN() + "Interface").stream().findFirst();
         if (!subjInterfaceOpt.isPresent()) {
             return;
         }
@@ -76,7 +86,7 @@ public class SubjectNode extends NamedNode implements DescriptionProvider{
     @Override
     protected SimpleNode[] buildChildren() {
         return new SimpleNode[]{
-                new SubjectObjectCollection(this),
+                new SubjectObjectCollection(this, subjectObjectStorage),
                 new SubjectCommandCollection(this)
         };
     }

@@ -3,16 +3,13 @@ package ru.uniteller.phpstorm.plugin.ts.ui.subjectTree;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.SimpleNode;
-import com.jetbrains.php.PhpIndex;
 import com.jetbrains.php.lang.documentation.phpdoc.PhpDocUtil;
 import com.jetbrains.php.lang.psi.elements.Method;
 import com.jetbrains.php.lang.psi.elements.Parameter;
 import com.jetbrains.php.lang.psi.elements.PhpClass;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Objects;
 import java.util.Optional;
 
 public class ReadDomainCommand extends NamedNode implements DescriptionProvider {
@@ -43,8 +40,7 @@ public class ReadDomainCommand extends NamedNode implements DescriptionProvider 
             return;
         }
 
-        @NotNull PhpIndex index = PhpIndex.getInstance(Objects.requireNonNull(getProject()));
-        Optional<PhpClass> commandOpt = index.getClassesByFQN(commandClassFqn).stream().findFirst();
+        Optional<PhpClass> commandOpt = phpIndex.getClassesByFQN(commandClassFqn).stream().findFirst();
         if (!commandOpt.isPresent()) {
             return;
         }
@@ -81,12 +77,11 @@ public class ReadDomainCommand extends NamedNode implements DescriptionProvider 
 
     @Override
     protected SimpleNode[] buildChildren() {
-        PhpIndex  index = Objects.requireNonNull(getProject()).getComponent(PhpIndex.class);
 
-        ArrayList<CommandParam> commandParams = new ArrayList<>();
+        ArrayList<ChangeDomainCommandParam> changeDomainCommandParams = new ArrayList<>();
 
 
-        index.getClassesByFQN(commandClassFqn).forEach(commandClass -> {
+        phpIndex.getClassesByFQN(commandClassFqn).forEach(commandClass -> {
             @Nullable Method method = commandClass.findMethodByName(commandMethod);
             if (null == method) {
                 return;
@@ -99,14 +94,14 @@ public class ReadDomainCommand extends NamedNode implements DescriptionProvider 
                     break;
                 }
 
-                //commandParams.add(new CommandParam(this, param));
+                //changeDomainCommandParams.add(new ChangeDomainCommandParam(this, param));
             }
 
 
 
         });
 
-        return commandParams.toArray(new CommandParam[0]);
+        return changeDomainCommandParams.toArray(new ChangeDomainCommandParam[0]);
 
     }
 

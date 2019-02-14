@@ -10,11 +10,11 @@ import com.jetbrains.php.lang.psi.elements.PhpClass;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ObjectProperty extends AbstractSubjectObject implements DescriptionProvider{
+public class ObjectNodeProperty extends AbstractObjectNode implements DescriptionProvider{
     private String propertyName;
     private String propertyDescription = "";
 
-    ObjectProperty(AbstractSubjectObject aParent, Field property) {
+    ObjectNodeProperty(AbstractObjectNode aParent, Field property) {
         super(aParent, property);
         initProperty(property);
         updatePresentation();

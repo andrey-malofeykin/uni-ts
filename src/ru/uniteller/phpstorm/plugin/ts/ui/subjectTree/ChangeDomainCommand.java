@@ -3,15 +3,16 @@ package ru.uniteller.phpstorm.plugin.ts.ui.subjectTree;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.SimpleNode;
-import com.jetbrains.php.PhpIndex;
-import com.jetbrains.php.lang.documentation.phpdoc.PhpDocUtil;
 import com.jetbrains.php.lang.psi.elements.Method;
 import com.jetbrains.php.lang.psi.elements.Parameter;
 import com.jetbrains.php.lang.psi.elements.PhpClass;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import ru.uniteller.phpstorm.plugin.ts.ui.subjectTree.ChangeCommandParam.ChangeCommandParamFactory;
+import ru.uniteller.phpstorm.plugin.ts.util.PhpDocUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Objects;
+import java.util.Optional;
 
 public class ChangeDomainCommand extends NamedNode implements DescriptionProvider {
     private String commandName = "";
@@ -24,7 +25,7 @@ public class ChangeDomainCommand extends NamedNode implements DescriptionProvide
         this.commandClassFqn = Objects.requireNonNull(data.getClassMethod().getContainingClass()).getFQN();
         this.commandMethod = data.getClassMethod().getName();
         if (null != data.getCommandName()) {
-            this.commandName = data.getCommandName();
+            this.commandName = data.getMethodName() + ":" + data.getCommandName();
         }
         initObject();
         updatePresentation();
@@ -43,8 +44,7 @@ public class ChangeDomainCommand extends NamedNode implements DescriptionProvide
             return;
         }
 
-        @NotNull PhpIndex index = PhpIndex.getInstance(Objects.requireNonNull(getProject()));
-        Optional<PhpClass> commandOpt = index.getClassesByFQN(commandClassFqn).stream().findFirst();
+        Optional<PhpClass> commandOpt = phpIndex.getClassesByFQN(commandClassFqn).stream().findFirst();
         if (!commandOpt.isPresent()) {
             return;
         }
@@ -59,34 +59,28 @@ public class ChangeDomainCommand extends NamedNode implements DescriptionProvide
         this.commandName = commandClassFqn + ":" + commandMethod;
 
         if (null != method.getDocComment()) {
-            String phpDocComment = PhpDocUtil.getDescription(method.getDocComment());
-            int endFirstLine = phpDocComment.indexOf("\n");
-            if (-1 == endFirstLine) {
-                this.commandName = phpDocComment.replaceAll("<.*?>", "");
-            } else {
-                this.commandName =  phpDocComment.substring(0, endFirstLine).replaceAll("<.*?>", "");
-                this.commandDescription = phpDocComment.substring(endFirstLine + 1);
-            }
-
+            PhpDocUtil.DocCommentInfo docCommentInfo = PhpDocUtil.buildDocCommentInfo(method.getDocComment());
+            commandName = docCommentInfo.getName();
+            commandDescription = docCommentInfo.getName();
         }
+
     }
 
     private void updatePresentation() {
         PresentationData presentation = getPresentation();
         presentation.clear();
-        presentation.addText(commandName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        presentation.addText( commandName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
         update(presentation);
     }
 
 
     @Override
     protected SimpleNode[] buildChildren() {
-        PhpIndex  index = Objects.requireNonNull(getProject()).getComponent(PhpIndex.class);
+        ArrayList<NamedNode> changeDomainCommandParams = new ArrayList<>();
 
-        ArrayList<CommandParam> commandParams = new ArrayList<>();
+        ChangeCommandParamFactory paramNodeFactory = new ChangeCommandParamFactory(config);
 
-
-        index.getClassesByFQN(commandClassFqn).forEach(commandClass -> {
+        phpIndex.getClassesByFQN(commandClassFqn).forEach(commandClass -> {
             @Nullable Method method = commandClass.findMethodByName(commandMethod);
             if (null == method) {
                 return;
@@ -95,21 +89,21 @@ public class ChangeDomainCommand extends NamedNode implements DescriptionProvide
             for (Parameter param: method.getParameters()) {
                 paramIndex++;
 
-                if (1 == paramIndex && !isDomainParam(param)) {
+                if (1 == paramIndex ) {
                     if (!isDomainParam(param)) {
                         break;
                     }
                     continue;
                 }
 
-                commandParams.add(new CommandParam(this, param));
+                changeDomainCommandParams.add(paramNodeFactory.paramFactory(this, param));
             }
 
 
 
         });
 
-        return commandParams.toArray(new CommandParam[0]);
+        return changeDomainCommandParams.toArray(new NamedNode[0]);
 
     }
 

@@ -4,15 +4,61 @@ package ru.uniteller.phpstorm.plugin.ts.util;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.php.PhpIndex;
+import com.jetbrains.php.lang.PhpCodeUtil;
+import com.jetbrains.php.lang.PhpLangUtil;
+import com.jetbrains.php.lang.psi.PhpPsiUtil;
 import com.jetbrains.php.lang.psi.elements.PhpClass;
 import com.jetbrains.php.lang.psi.elements.PhpNamespace;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 
 
 public class PhpIndexUtil {
+
+    public static boolean classIsImplement(@NotNull PhpClass baseClass, @NotNull String interfaceFqn) {
+        for (PhpClass parentClass: baseClass.getSupers()) {
+            if (parentClass.getFQN().equals(interfaceFqn)) {
+                return true;
+            }
+            if (classIsImplement(parentClass, interfaceFqn)) {
+                return true;
+            }
+        }
+
+        return false;
+
+    }
+
+    public static HashSet<PhpClass> getEndClasses(@NotNull PhpClass baseClass) {
+        return getEndClasses(baseClass, null);
+    }
+
+    private static   HashSet<PhpClass> getEndClasses(@NotNull PhpClass baseClass, @Nullable HashSet<PhpClass> endSubclasses) {
+        PhpIndex phpIndex = PhpIndex.getInstance(baseClass.getProject());
+        @NotNull Collection<PhpClass> allSubclasses = phpIndex.getAllSubclasses(baseClass.getFQN());
+
+        if (null == endSubclasses) {
+            endSubclasses = new HashSet<>();
+        }
+
+        if (0 == allSubclasses.size()) {
+            if (!baseClass.isInterface() && !baseClass.isAbstract() && !baseClass.isTrait() && !baseClass.isAnonymous()) {
+                endSubclasses.add(baseClass);
+            }
+        } else {
+            for (PhpClass targetClass: allSubclasses) {
+                getEndClasses(targetClass, endSubclasses);
+            }
+        }
+        return endSubclasses;
+    }
+
+
+
 
     /**
      * Collect PhpClass which are inside current namespace and in sub-namespaces
