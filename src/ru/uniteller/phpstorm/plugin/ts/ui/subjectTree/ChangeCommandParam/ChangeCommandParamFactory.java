@@ -214,6 +214,7 @@ public class ChangeCommandParamFactory {
         }
 
 
+        TestStandNavigationUtil.MethodParam methodParam = TestStandNavigationUtil.createMethodParam(param);
         if (1 == commandParamInfoCollections.values().size()) {
             CommandParamInfo commandParamInfo = commandParamInfoCollections.values().iterator().next();
             if (commandParamInfo.getType().equals(TypeParamInterface.TypeParam.DATA) && null != commandParamInfo.getTypeClassFqn()) {
@@ -222,12 +223,12 @@ public class ChangeCommandParamFactory {
                         paramName,
                         paramDescription,
                         commandParamInfo.getTypeClassFqn(),
-                        TestStandNavigationUtil.createMethodParam(param)
+                        methodParam
                 );
             }
         }
 
-        return new SmartParam(pNode, paramName, paramDescription, commandParamInfoCollections);
+        return new SmartParam(pNode, paramName, paramDescription, commandParamInfoCollections, methodParam);
 
     }
 }

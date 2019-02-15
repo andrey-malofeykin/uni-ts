@@ -4,6 +4,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.NavigatableAdapter;
 import com.jetbrains.php.PhpIndex;
+import com.jetbrains.php.lang.documentation.phpdoc.psi.PhpDocMethod;
 import com.jetbrains.php.lang.psi.elements.Field;
 import com.jetbrains.php.lang.psi.elements.Method;
 import com.jetbrains.php.lang.psi.elements.Parameter;
@@ -35,7 +36,7 @@ public class TestStandNavigationUtil {
             this.classFQN = classFQN;
         }
 
-        @NotNull public ClassFQN getClassFQN() {
+        @NotNull ClassFQN getClassFQN() {
             return classFQN;
         }
     }
@@ -64,6 +65,12 @@ public class TestStandNavigationUtil {
         }
     }
 
+    final static public class ClassDocMethod extends ClassMember {
+        public ClassDocMethod(@NotNull String value, @NotNull ClassFQN classFQN) {
+            super(value, classFQN);
+        }
+    }
+
     final static public class MethodParam extends NavigationSourceItem {
         private ClassMethod classMethod;
         MethodParam(@NotNull String value, @NotNull ClassMethod classMethod) {
@@ -71,7 +78,7 @@ public class TestStandNavigationUtil {
             this.classMethod = classMethod;
         }
 
-        @NotNull public ClassMethod getClassMethod() {
+        @NotNull ClassMethod getClassMethod() {
             return classMethod;
         }
     }
@@ -190,7 +197,7 @@ public class TestStandNavigationUtil {
 
                 Parameter sourceParam = null;
                 for (Parameter currentParam: method.getParameters())  {
-                    if (param.toString().equals(param.toString())) {
+                    if (currentParam.getName().equals(param.toString())) {
                         sourceParam = currentParam;
                         break;
                     }
@@ -201,6 +208,41 @@ public class TestStandNavigationUtil {
 
 
                 navigate(project, phpClass.getContainingFile().getVirtualFile(), sourceParam.getTextOffset() , true);
+            }
+        };
+    }
+
+    public static @Nullable Navigatable createNavigatable(@Nullable Project project, @Nullable ClassDocMethod method) {
+        if (null == project || null == method) {
+            return null;
+        }
+        return new NavigatableAdapter() {
+            @Override
+            public void navigate(boolean requestFocus) {
+                @NotNull ClassFQN classFQN = method.getClassFQN();
+
+                @NotNull Collection<PhpClass> phpClassCollection = PhpIndex.getInstance(project).getAnyByFQN(classFQN.toString());
+                if (1 != phpClassCollection.size()) {
+                    return;
+                }
+                PhpClass phpClass = phpClassCollection.iterator().next();
+
+                if (null == phpClass.getDocComment()) {
+                    return;
+                }
+
+                PhpDocMethod targetMethod = null;
+                for (PhpDocMethod currentDocMethod: phpClass.getDocComment().getMethods()) {
+                    if (currentDocMethod.getName().equals(method.toString())) {
+                        targetMethod = currentDocMethod;
+                        break;
+                    }
+                }
+                if (null == targetMethod) {
+                    return;
+                }
+
+                navigate(project, phpClass.getContainingFile().getVirtualFile(), targetMethod.getTextOffset() , true);
             }
         };
     }

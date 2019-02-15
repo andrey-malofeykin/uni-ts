@@ -131,10 +131,15 @@ public class TestStandPanel extends JBTabbedPane implements DataProvider {
             DefaultMutableTreeNode node = (DefaultMutableTreeNode) e.getPath().getLastPathComponent();
             Object userObj = node.getUserObject();
 
+            boolean needDefaultAction = true;
             if (userObj instanceof DescriptionProvider) {
                 docPanel.setText(((DescriptionProvider) userObj).getDescriptionSource());
+                needDefaultAction = false;
             }
 
+            if (needDefaultAction) {
+                docPanel.setText("");
+            }
         });
 
         myTree.setRootVisible(true);
@@ -178,9 +183,7 @@ public class TestStandPanel extends JBTabbedPane implements DataProvider {
         if (null == objNode) {
             treeStructure.getTreeBuilder().expand(subjectNode, () -> treeStructure.getTreeBuilder().select(subjectNode));
         } else {
-            treeStructure.getTreeBuilder().expand(objNode, () -> {
-                treeStructure.getTreeBuilder().select(objNode);
-            });
+            treeStructure.getTreeBuilder().expand(objNode, () -> treeStructure.getTreeBuilder().select(objNode));
         }
     }
 

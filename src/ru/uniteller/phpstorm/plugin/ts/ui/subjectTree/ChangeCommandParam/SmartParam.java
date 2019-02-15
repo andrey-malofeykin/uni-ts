@@ -1,6 +1,7 @@
 package ru.uniteller.phpstorm.plugin.ts.ui.subjectTree.ChangeCommandParam;
 
 import com.intellij.ide.projectView.PresentationData;
+import com.intellij.pom.Navigatable;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.SimpleNode;
@@ -9,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import ru.uniteller.phpstorm.plugin.ts.ui.subjectTree.DescriptionProvider;
 import ru.uniteller.phpstorm.plugin.ts.ui.subjectTree.ExpandTreeNodeProvider;
 import ru.uniteller.phpstorm.plugin.ts.ui.subjectTree.NamedNode;
+import ru.uniteller.phpstorm.plugin.ts.util.TestStandNavigationUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,15 +23,20 @@ public class SmartParam extends NamedNode implements DescriptionProvider, Expand
     private HashMap<String, ChangeCommandParamFactory.CommandParamInfo> commandParamInfoCollections;
     private @Nullable ExpandTreeNodeProvider.TargetInfo targetInfo;
 
+    private TestStandNavigationUtil.MethodParam methodParam;
+
     SmartParam(
             NamedNode aParent,
             @NotNull String paramName,
             @Nullable String paramDescription,
-            @NotNull HashMap<String, ChangeCommandParamFactory.CommandParamInfo> commandParamInfoCollections) {
+            @NotNull HashMap<String, ChangeCommandParamFactory.CommandParamInfo> commandParamInfoCollections,
+            TestStandNavigationUtil.MethodParam methodParam
+    ) {
         super(aParent, paramName);
         this.paramName = paramName;
         this.paramDescription = paramDescription;
         this.commandParamInfoCollections = commandParamInfoCollections;
+        this.methodParam = methodParam;
         if (1 == commandParamInfoCollections.values().size()) {
             ChangeCommandParamFactory.CommandParamInfo commandParamInfo = commandParamInfoCollections.values().iterator().next();
             if (null != commandParamInfo.getTargetInfo()) {
@@ -103,7 +110,8 @@ public class SmartParam extends NamedNode implements DescriptionProvider, Expand
                     (NamedNode)getParent(),
                     commandParam.getDocCommentInfo().getName(),
                     commandParam.getDocCommentInfo().getDescription(),
-                    commandParamInfoCollectionsLocal
+                    commandParamInfoCollectionsLocal,
+                    methodParam
                     ));
         }
 
@@ -113,5 +121,10 @@ public class SmartParam extends NamedNode implements DescriptionProvider, Expand
     @Override
     public String getDescriptionSource() {
         return paramDescription;
+    }
+
+    @Override
+    public @Nullable Navigatable getNavigatable() {
+        return TestStandNavigationUtil.createNavigatable(getProject(), methodParam);
     }
 }

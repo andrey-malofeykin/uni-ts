@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 
 
 class SubjectCommandCollection extends NamedNode {
@@ -39,6 +40,41 @@ class SubjectCommandCollection extends NamedNode {
 
     @Override
     protected SimpleNode[] buildChildren() {
+
+        ArrayList<NamedNode> namedNodes = new ArrayList<>();
+
+
+        HashSet<String> publicCommandNames = new HashSet<>();
+        SimpleNode[] publicCommands = buildListPublicCommand(publicCommandNames);
+
+        if (publicCommands.length > 0) {
+            namedNodes.add(
+                    new NamedNode(this, "Публичные") {
+                        @Override
+                        protected SimpleNode[] buildChildren() {
+                            return publicCommands;
+                        }
+                    }
+            );
+        }
+
+        SimpleNode[] protectedCommands = buildListProtectedCommand(publicCommandNames);
+        if (protectedCommands.length > 0) {
+            namedNodes.add(
+                    new NamedNode(this, "Внутренние") {
+                        @Override
+                        protected SimpleNode[] buildChildren() {
+                            return protectedCommands;
+                        }
+                    }
+            );
+        }
+
+
+        return namedNodes.toArray(new NamedNode[0]);
+    }
+
+    private SimpleNode[] buildListPublicCommand(HashSet<String> publicCommandNames) {
         String subjectInterfaceFqn = subjectClassFQN + "Interface";
 
         HashMap<String, ChangeDomainCommand> changeDomainCommands = new HashMap<>();
@@ -52,6 +88,7 @@ class SubjectCommandCollection extends NamedNode {
                 return;
             }
             for (PhpDocMethod method: docComment.getMethods()) {
+                publicCommandNames.add(method.getName());
                 @Nullable AbstractCommandData commandData = buildCommandDataByMethodTag(method);
                 if (commandData instanceof ReadDomainCommandData) {
 
@@ -75,6 +112,52 @@ class SubjectCommandCollection extends NamedNode {
 
         return namedNodes.toArray(new NamedNode[0]);
     }
+
+
+
+    private SimpleNode[] buildListProtectedCommand(HashSet<String> publicCommandNames) {
+        String subjectInterfaceFqn = subjectClassFQN;
+
+        HashMap<String, ChangeDomainCommand> changeDomainCommands = new HashMap<>();
+        HashMap<String, ReadDomainCommand> readDomainCommands = new HashMap<>();
+
+        @NotNull Collection<PhpClass> subjectClasses = phpIndex.getClassesByFQN(subjectInterfaceFqn);
+
+        subjectClasses.forEach(subjectClass -> {
+            @Nullable PhpDocComment docComment = subjectClass.getDocComment();
+            if (null == docComment) {
+                return;
+            }
+            for (PhpDocMethod method: docComment.getMethods()) {
+                if (publicCommandNames.contains(method.getName())) {
+                    continue;
+                }
+
+                @Nullable AbstractCommandData commandData = buildCommandDataByMethodTag(method);
+                if (commandData instanceof ReadDomainCommandData) {
+
+                    readDomainCommands.put(commandData.getMethodName(), new ReadDomainCommand(this, (ReadDomainCommandData)commandData));
+                }
+                if (commandData instanceof ChangeDomainCommandData) {
+                    changeDomainCommands.put(commandData.getMethodName(), new ChangeDomainCommand(this, (ChangeDomainCommandData)commandData));
+                }
+            }
+        });
+
+
+        ArrayList<NamedNode> namedNodes = new ArrayList<>();
+        if (readDomainCommands.size() > 0) {
+            namedNodes.add(new ReadDomainCollection((SubjectNode)getParent(), readDomainCommands.values().toArray(new ReadDomainCommand[0])));
+        }
+        if (changeDomainCommands.size() > 0) {
+            namedNodes.add(new ChangeDomainCollection((SubjectNode)getParent(), changeDomainCommands.values().toArray(new ChangeDomainCommand[0])));
+        }
+
+
+        return namedNodes.toArray(new NamedNode[0]);
+    }
+
+
 
 
     private boolean isReadDomainCommand(String methodName) {
@@ -153,6 +236,10 @@ class SubjectCommandCollection extends NamedNode {
 
         String getMethodName() {
             return methodName;
+        }
+
+        PhpDocMethod getPhpDocMethod() {
+            return phpDocMethod;
         }
     }
 

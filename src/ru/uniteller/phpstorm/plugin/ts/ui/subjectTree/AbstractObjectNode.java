@@ -9,6 +9,7 @@ import com.jetbrains.php.lang.psi.resolve.types.PhpType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Optional;
 
@@ -69,10 +70,18 @@ public abstract class AbstractObjectNode extends NamedNode implements Descriptio
 
         buildData(objClass, objectProperties, objectConstants);
 
-        return new SimpleNode[]{
-                new Constants(this, objectConstants.values().toArray(new ObjectConstant[0])),
-                new Properties(this, objectProperties.values().toArray(new ObjectNodeProperty[0])),
-        };
+        ArrayList<NamedNode>  children = new ArrayList<>();
+
+        if (objectConstants.size() > 0) {
+            children.add(new Constants(this, objectConstants.values().toArray(new ObjectConstant[0])));
+        }
+
+        if (objectProperties.size() > 0) {
+            children.add(new Properties(this, objectProperties.values().toArray(new ObjectNodeProperty[0])));
+        }
+
+        return children.toArray(new NamedNode[0]);
+
     }
 
     private void buildData(PhpClass phpClass, HashMap<String, ObjectNodeProperty> objectProperties, HashMap<String, ObjectConstant> objectConstants) {
