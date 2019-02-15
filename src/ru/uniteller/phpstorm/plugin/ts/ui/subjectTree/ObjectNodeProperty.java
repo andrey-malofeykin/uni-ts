@@ -1,6 +1,7 @@
 package ru.uniteller.phpstorm.plugin.ts.ui.subjectTree;
 
 import com.intellij.ide.projectView.PresentationData;
+import com.intellij.pom.Navigatable;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.jetbrains.php.lang.documentation.phpdoc.PhpDocUtil;
@@ -9,15 +10,24 @@ import com.jetbrains.php.lang.psi.elements.Field;
 import com.jetbrains.php.lang.psi.elements.PhpClass;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import ru.uniteller.phpstorm.plugin.ts.util.TestStandNavigationUtil;
 
 public class ObjectNodeProperty extends AbstractObjectNode implements DescriptionProvider{
     private String propertyName;
     private String propertyDescription = "";
 
+    private TestStandNavigationUtil.ClassField classField;
+
     ObjectNodeProperty(AbstractObjectNode aParent, Field property) {
         super(aParent, property);
         initProperty(property);
         updatePresentation();
+
+        if (null != property.getContainingClass()) {
+            TestStandNavigationUtil.ClassFQN classFQN = new TestStandNavigationUtil.ClassFQN(property.getContainingClass().getFQN());
+            classField = new TestStandNavigationUtil.ClassField(property.getName(), classFQN);
+        }
+
     }
 
 
@@ -69,5 +79,11 @@ public class ObjectNodeProperty extends AbstractObjectNode implements Descriptio
     @Override
     public String getDescriptionSource() {
         return propertyDescription;
+    }
+
+
+    @Override
+    public @Nullable Navigatable getNavigatable() {
+        return TestStandNavigationUtil.createNavigatable(getProject(), classField);
     }
 }

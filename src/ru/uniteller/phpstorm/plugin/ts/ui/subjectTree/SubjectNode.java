@@ -2,16 +2,20 @@ package ru.uniteller.phpstorm.plugin.ts.ui.subjectTree;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
+import com.intellij.pom.Navigatable;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.jetbrains.php.lang.documentation.phpdoc.PhpDocUtil;
 import com.jetbrains.php.lang.psi.elements.PhpClass;
 import org.jetbrains.annotations.Nullable;
+import ru.uniteller.phpstorm.plugin.ts.util.TestStandNavigationUtil;
 
 import java.util.HashMap;
 import java.util.Optional;
 
 public class SubjectNode extends NamedNode implements DescriptionProvider{
+    private TestStandNavigationUtil.ClassFQN classFQN;
+
     /**
      * Имя субъекта
      */
@@ -33,6 +37,7 @@ public class SubjectNode extends NamedNode implements DescriptionProvider{
         super(aParent, subjectClass.getName());
         this.subjectShortName = subjectClass.getName();
         this.subjectClassFQN = subjectClass.getFQN();
+        this.classFQN = new TestStandNavigationUtil.ClassFQN(subjectClass.getFQN());
         initSubjectNode(subjectClass);
         myClosedIcon = AllIcons.General.BalloonInformation;
         updatePresentation();
@@ -97,6 +102,9 @@ public class SubjectNode extends NamedNode implements DescriptionProvider{
     }
 
 
-
+    @Override
+    public @Nullable Navigatable getNavigatable() {
+        return TestStandNavigationUtil.createNavigatable(getProject(), classFQN);
+    }
 
 }

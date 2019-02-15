@@ -1,21 +1,30 @@
 package ru.uniteller.phpstorm.plugin.ts.ui.subjectTree;
 
 import com.intellij.ide.projectView.PresentationData;
+import com.intellij.pom.Navigatable;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.jetbrains.php.lang.documentation.phpdoc.PhpDocUtil;
 import com.jetbrains.php.lang.documentation.phpdoc.psi.PhpDocComment;
 import com.jetbrains.php.lang.psi.elements.Field;
 import org.jetbrains.annotations.Nullable;
+import ru.uniteller.phpstorm.plugin.ts.util.TestStandNavigationUtil;
 
 class ObjectConstant extends NamedNode implements DescriptionProvider{
     private String constantName;
     private String constantDescription = "";
 
+    private TestStandNavigationUtil.ClassConst classField;
+
     ObjectConstant(AbstractObjectNode aParent, Field property) {
         super(aParent, property.getName());
         initProperty(property);
         updatePresentation();
+
+        if (null != property.getContainingClass()) {
+            TestStandNavigationUtil.ClassFQN classFQN = new TestStandNavigationUtil.ClassFQN(property.getContainingClass().getFQN());
+            classField = new TestStandNavigationUtil.ClassConst(property.getName(), classFQN);
+        }
     }
 
 
@@ -57,5 +66,10 @@ class ObjectConstant extends NamedNode implements DescriptionProvider{
     @Override
     public String getDescriptionSource() {
         return constantDescription;
+    }
+
+    @Override
+    public @Nullable Navigatable getNavigatable() {
+        return TestStandNavigationUtil.createNavigatable(getProject(), classField);
     }
 }

@@ -1,6 +1,7 @@
 package ru.uniteller.phpstorm.plugin.ts.ui.subjectTree.ChangeCommandParam;
 
 import com.intellij.ide.projectView.PresentationData;
+import com.intellij.pom.Navigatable;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.SimpleNode;
@@ -9,16 +10,27 @@ import org.jetbrains.annotations.Nullable;
 import ru.uniteller.phpstorm.plugin.ts.ui.subjectTree.AbstractObjectNode;
 import ru.uniteller.phpstorm.plugin.ts.ui.subjectTree.ChangeDomainCommand;
 import ru.uniteller.phpstorm.plugin.ts.ui.subjectTree.DescriptionProvider;
+import ru.uniteller.phpstorm.plugin.ts.util.TestStandNavigationUtil;
 
 
 public class DefaultParam extends AbstractObjectNode implements DescriptionProvider  {
     private String paramName;
     private String paramDescription;
 
-    DefaultParam(ChangeDomainCommand aParent, @NotNull String paramName, @Nullable String paramDescription, @Nullable String classFqn) {
+    private TestStandNavigationUtil.MethodParam methodParam;
+
+    DefaultParam(
+            ChangeDomainCommand aParent,
+            @NotNull String paramName,
+            @Nullable String paramDescription,
+            @Nullable String classFqn,
+            TestStandNavigationUtil.MethodParam methodParam
+
+    ) {
         super(aParent, paramName,  classFqn);
         this.paramName = paramName;
         this.paramDescription = paramDescription;
+        this.methodParam = methodParam;
         updatePresentation();
     }
 
@@ -38,5 +50,10 @@ public class DefaultParam extends AbstractObjectNode implements DescriptionProvi
     @Override
     public String getDescriptionSource() {
         return paramDescription;
+    }
+
+    @Override
+    public @Nullable Navigatable getNavigatable() {
+        return TestStandNavigationUtil.createNavigatable(getProject(), methodParam);
     }
 }

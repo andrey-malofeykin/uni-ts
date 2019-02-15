@@ -1,6 +1,7 @@
 package ru.uniteller.phpstorm.plugin.ts.ui.subjectTree;
 
 import com.intellij.ide.projectView.PresentationData;
+import com.intellij.pom.Navigatable;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.jetbrains.php.lang.psi.elements.Method;
@@ -9,6 +10,7 @@ import com.jetbrains.php.lang.psi.elements.PhpClass;
 import org.jetbrains.annotations.Nullable;
 import ru.uniteller.phpstorm.plugin.ts.ui.subjectTree.ChangeCommandParam.ChangeCommandParamFactory;
 import ru.uniteller.phpstorm.plugin.ts.util.PhpDocUtil;
+import ru.uniteller.phpstorm.plugin.ts.util.TestStandNavigationUtil;
 
 import java.util.ArrayList;
 import java.util.Objects;
@@ -20,6 +22,8 @@ public class ChangeDomainCommand extends NamedNode implements DescriptionProvide
     private String commandClassFqn;
     private String commandMethod;
 
+    private TestStandNavigationUtil.ClassMethod classMethod;
+
     ChangeDomainCommand(SubjectCommandCollection aParent, SubjectCommandCollection.ChangeDomainCommandData data) {
         super(aParent, data.getMethodName());
         this.commandClassFqn = Objects.requireNonNull(data.getClassMethod().getContainingClass()).getFQN();
@@ -29,6 +33,12 @@ public class ChangeDomainCommand extends NamedNode implements DescriptionProvide
         }
         initObject();
         updatePresentation();
+
+
+        if (null != data.getClassMethod().getContainingClass()) {
+            TestStandNavigationUtil.ClassFQN classFQN = new TestStandNavigationUtil.ClassFQN(data.getClassMethod().getContainingClass().getFQN());
+            classMethod = new TestStandNavigationUtil.ClassMethod(data.getClassMethod().getName(), classFQN);
+        }
     }
 
     private void initObject() {
@@ -116,4 +126,9 @@ public class ChangeDomainCommand extends NamedNode implements DescriptionProvide
         return commandDescription;
     }
 
+
+    @Override
+    public @Nullable Navigatable getNavigatable() {
+        return TestStandNavigationUtil.createNavigatable(getProject(), classMethod);
+    }
 }

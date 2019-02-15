@@ -48,12 +48,8 @@ class SubjectObjectCollection extends NamedNode {
             if (objClass.getNamespaceName().equals(objNamespace)) {
                 return;
             }
-            Stream<PhpClass> classImplObjInterface = Arrays.stream(objClass.getImplementedInterfaces()).filter(
-                    phpClass -> phpClass.getFQN().equals(config.getObjInterface())
-            );
 
-
-            if (0 == classImplObjInterface.count()) {
+            if (!PhpIndexUtil.classIsImplement(objClass, config.getObjInterface())) {
                 return;
             }
 

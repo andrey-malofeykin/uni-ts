@@ -12,6 +12,7 @@ import ru.uniteller.phpstorm.plugin.ts.ui.subjectTree.NamedNode;
 import com.jetbrains.php.lang.psi.elements.Parameter;
 import ru.uniteller.phpstorm.plugin.ts.util.PhpDocUtil;
 import ru.uniteller.phpstorm.plugin.ts.util.PhpIndexUtil;
+import ru.uniteller.phpstorm.plugin.ts.util.TestStandNavigationUtil;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -212,10 +213,17 @@ public class ChangeCommandParamFactory {
             paramName = paramName + "(" + paramExtName + ")";
         }
 
+
         if (1 == commandParamInfoCollections.values().size()) {
             CommandParamInfo commandParamInfo = commandParamInfoCollections.values().iterator().next();
             if (commandParamInfo.getType().equals(TypeParamInterface.TypeParam.DATA) && null != commandParamInfo.getTypeClassFqn()) {
-                return new DefaultParam(pNode, paramName, paramDescription, commandParamInfo.getTypeClassFqn());
+                return new DefaultParam(
+                        pNode,
+                        paramName,
+                        paramDescription,
+                        commandParamInfo.getTypeClassFqn(),
+                        TestStandNavigationUtil.createMethodParam(param)
+                );
             }
         }
 
