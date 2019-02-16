@@ -83,6 +83,18 @@ public class TestStandNavigationUtil {
         }
     }
 
+    final static public class DocMethodParam extends NavigationSourceItem {
+        private ClassDocMethod classMethod;
+        DocMethodParam(@NotNull String value, @NotNull ClassDocMethod classMethod) {
+            super(value);
+            this.classMethod = classMethod;
+        }
+
+        @NotNull ClassDocMethod getClassMethod() {
+            return classMethod;
+        }
+    }
+
 
     private TestStandNavigationUtil() { }
 
@@ -247,6 +259,63 @@ public class TestStandNavigationUtil {
         };
     }
 
+    public static @Nullable Navigatable createNavigatable(@Nullable Project project, @Nullable DocMethodParam param) {
+        if (null == project || null == param) {
+            return null;
+        }
+        return new NavigatableAdapter() {
+            @Override
+            public void navigate(boolean requestFocus) {
+                @NotNull ClassFQN classFQN = param.getClassMethod().getClassFQN();
+
+                @NotNull Collection<PhpClass> phpClassCollection = PhpIndex.getInstance(project).getAnyByFQN(classFQN.toString());
+                if (1 != phpClassCollection.size()) {
+                    return;
+                }
+                PhpClass phpClass = phpClassCollection.iterator().next();
+
+                if (null == phpClass.getDocComment()) {
+                    return;
+                }
+
+                PhpDocMethod targetMethod = null;
+                for (PhpDocMethod currentDocMethod: phpClass.getDocComment().getMethods()) {
+                    if (currentDocMethod.getName().equals(param.getClassMethod().toString())) {
+                        targetMethod = currentDocMethod;
+                        break;
+                    }
+                }
+                if (null == targetMethod) {
+                    return;
+                }
+
+                Parameter targetParam = null;
+                for (Parameter currentParam: targetMethod.getParameters()) {
+                    if (currentParam.getName().equals(param.toString())) {
+                        targetParam = currentParam;
+                        break;
+                    }
+                }
+                if (null == targetParam) {
+                    return;
+                }
+
+
+                navigate(project, phpClass.getContainingFile().getVirtualFile(), targetParam.getTextOffset() , true);
+            }
+        };
+    }
+
+    public static DocMethodParam createDocMethodParam(Parameter param) {
+        Method method = (Method) param.getParent().getParent();
+        return new DocMethodParam(
+                param.getName(),
+                new ClassDocMethod(
+                        method.getName(),
+                        new ClassFQN(Objects.requireNonNull(method.getContainingClass()).getFQN())
+                )
+        );
+    }
 
     public static MethodParam createMethodParam(Parameter param) {
         Method method = (Method) param.getParent().getParent();

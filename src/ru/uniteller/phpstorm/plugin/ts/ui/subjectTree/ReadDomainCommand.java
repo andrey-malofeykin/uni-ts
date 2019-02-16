@@ -7,6 +7,7 @@ import com.intellij.ui.treeStructure.SimpleNode;
 import com.jetbrains.php.lang.documentation.phpdoc.psi.PhpDocComment;
 import com.jetbrains.php.lang.psi.elements.Field;
 import com.jetbrains.php.lang.psi.elements.Method;
+import com.jetbrains.php.lang.psi.elements.Parameter;
 import com.jetbrains.php.lang.psi.elements.PhpClass;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +23,32 @@ public class ReadDomainCommand extends NamedNode implements DescriptionProvider 
     private String returnClassFqn;
     private boolean hasSearchCriteria = false;
     private TestStandNavigationUtil.ClassDocMethod classDocMethod;
+    private HashMap<String, CommandParamInfo> childInfo = new HashMap<>();
 
+    private class CommandParamInfo {
+        private TestStandNavigationUtil.DocMethodParam navigatable;
+        private String description;
+        private String name;
+
+
+        CommandParamInfo(@NotNull TestStandNavigationUtil.DocMethodParam  navigatable, @NotNull String description, @NotNull String name) {
+            this.navigatable = navigatable;
+            this.description = description;
+            this.name = name;
+        }
+
+        TestStandNavigationUtil.DocMethodParam getNavigatable() {
+            return navigatable;
+        }
+
+        String getDescription() {
+            return description;
+        }
+
+        public String getName() {
+            return name;
+        }
+    }
 
     ReadDomainCommand(SubjectCommandCollection aParent,  SubjectCommandCollection.ReadDomainCommandData data) {
         super(aParent, data.getMethodName());
@@ -34,6 +60,12 @@ public class ReadDomainCommand extends NamedNode implements DescriptionProvider 
         );
         if (data.getPhpDocMethod().getName().startsWith("find") && 1 == data.getPhpDocMethod().getParameters().length) {
             hasSearchCriteria = true;
+        } else {
+            for (Parameter param: data.getPhpDocMethod().getParameters()) {
+                TestStandNavigationUtil.DocMethodParam docMethodParam = TestStandNavigationUtil.createDocMethodParam(param);
+                String description = "<h1>Тип данных<h1><p>" + String.join("|", param.getDocType().getTypes()) + "</p>";
+                childInfo.put(param.getName(), new CommandParamInfo(docMethodParam, description, param.getName()));
+            }
         }
 
         if (null != data.getCommandName()) {
@@ -72,8 +104,8 @@ public class ReadDomainCommand extends NamedNode implements DescriptionProvider 
         childNodes.add(new ReturnNode(this, "Возвращает: " + returnObjName, returnClass.getFQN()));
         if (hasSearchCriteria) {
             childNodes.add(new SearchCriteria(this, returnClass.getFQN()));
-        } else {
-            childNodes.add(new CommandParams(this, returnClass.getFQN()));
+        } else if (childInfo.size() > 0)  {
+            childNodes.add(new CommandParams(this, childInfo));
         }
 
 
@@ -82,15 +114,50 @@ public class ReadDomainCommand extends NamedNode implements DescriptionProvider 
     }
 
     private class CommandParams extends NamedNode {
+        private class CommandParam extends NamedNode implements DescriptionProvider {
+            private CommandParamInfo info;
+            CommandParam(NamedNode aParent, CommandParamInfo info) {
+                super(aParent, info.getName());
+                this.info = info;
+            }
 
-        CommandParams(NamedNode aParent, String name) {
+            @Override
+            protected SimpleNode[] buildChildren() {
+                return new SimpleNode[0];
+            }
+
+            @Override
+            public String getDescriptionSource() {
+                return info.getDescription();
+            }
+
+            @Override
+            public @Nullable Navigatable getNavigatable() {
+                return TestStandNavigationUtil.createNavigatable(getProject(), info.getNavigatable());
+            }
+        }
+
+
+        HashMap<String, CommandParamInfo> childInfo;
+        CommandParams(NamedNode aParent, HashMap<String, CommandParamInfo> childInfo) {
             super(aParent, "Параметры");
+            this.childInfo = childInfo;
         }
 
         @Override
         protected SimpleNode[] buildChildren() {
-            return new SimpleNode[0];
+            CommandParam[] nodes = new CommandParam[childInfo.size()];
+
+            int i = 0;
+            for (CommandParamInfo item: childInfo.values()) {
+                nodes[i] = new CommandParam(this, item);
+            }
+
+
+            return nodes;
         }
+
+
     }
 
 
