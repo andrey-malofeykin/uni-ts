@@ -1,23 +1,20 @@
 package ru.uniteller.phpstorm.plugin.ts.ui.subjectTree.ChangeCommandParam;
 
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilCore;
 import com.jetbrains.php.PhpIndex;
-import com.jetbrains.php.lang.documentation.PhpDefaultDocSource;
 import com.jetbrains.php.lang.documentation.PhpDocLinkResolver;
 import com.jetbrains.php.lang.documentation.PhpParameterDocSource;
 import com.jetbrains.php.lang.documentation.phpdoc.psi.PhpDocRef;
 import com.jetbrains.php.lang.documentation.phpdoc.psi.tags.PhpDocTag;
 import com.jetbrains.php.lang.psi.elements.Method;
+import com.jetbrains.php.lang.psi.elements.Parameter;
 import com.jetbrains.php.lang.psi.elements.PhpClass;
-import com.jetbrains.php.lang.psi.elements.PhpClassMember;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.uniteller.phpstorm.plugin.ts.service.Config;
 import ru.uniteller.phpstorm.plugin.ts.ui.subjectTree.ChangeDomainCommand;
 import ru.uniteller.phpstorm.plugin.ts.ui.subjectTree.ExpandTreeNodeProvider;
 import ru.uniteller.phpstorm.plugin.ts.ui.subjectTree.NamedNode;
-import com.jetbrains.php.lang.psi.elements.Parameter;
 import ru.uniteller.phpstorm.plugin.ts.util.PhpDocUtil;
 import ru.uniteller.phpstorm.plugin.ts.util.PhpIndexUtil;
 import ru.uniteller.phpstorm.plugin.ts.util.TestStandNavigationUtil;
@@ -183,7 +180,7 @@ public class ChangeCommandParamFactory {
         }
         @NotNull PhpDocTag[] seeCollection = method.getDocComment().getTagElementsByName("@see");
 
-        ArrayList<PhpDocTag> sourceSeeTags = new ArrayList<>();
+        ArrayList<PhpClass> sourcePhpClasses = new ArrayList<>();
         for (PhpDocTag see: seeCollection) {
             Matcher mathRes = config.getPatternSearchCriteria().matcher(see.getTagValue());
             if (mathRes.find()) {
@@ -195,25 +192,16 @@ public class ChangeCommandParamFactory {
                     }
                     @NotNull Collection<PhpDocLinkResolver.Result> resolvers = PhpDocLinkResolver.resolve(phpDocRef.getText(), see);
                     for (PhpDocLinkResolver.Result resolver: resolvers) {
-                        @Nullable PhpClassMember member = resolver.getMember();
-                        if (member instanceof Method) {
-
+                        @Nullable PhpClass phpClass = resolver.getPhpClass();
+                        if (phpClass != null) {
+                            sourcePhpClasses.add(phpClass);
                         }
                     }
-
-
-
-
-
-
-                    sourceSeeTags.add(see);
                 }
             }
         }
 
-
-
-        return null;
+        return sourcePhpClasses.size() > 0 ? sourcePhpClasses : null;
     }
 
 
