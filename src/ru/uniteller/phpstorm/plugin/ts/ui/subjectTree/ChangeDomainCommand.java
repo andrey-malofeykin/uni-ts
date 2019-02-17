@@ -106,7 +106,7 @@ public class ChangeDomainCommand extends NamedNode implements DescriptionProvide
                     continue;
                 }
 
-                changeDomainCommandParams.add(paramNodeFactory.paramFactory(this, param));
+                changeDomainCommandParams.add(paramNodeFactory.paramFactory(this, param, method));
             }
 
 

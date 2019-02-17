@@ -1,8 +1,16 @@
 package ru.uniteller.phpstorm.plugin.ts.ui.subjectTree.ChangeCommandParam;
 
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.jetbrains.php.PhpIndex;
+import com.jetbrains.php.lang.documentation.PhpDefaultDocSource;
+import com.jetbrains.php.lang.documentation.PhpDocLinkResolver;
 import com.jetbrains.php.lang.documentation.PhpParameterDocSource;
+import com.jetbrains.php.lang.documentation.phpdoc.psi.PhpDocRef;
+import com.jetbrains.php.lang.documentation.phpdoc.psi.tags.PhpDocTag;
+import com.jetbrains.php.lang.psi.elements.Method;
 import com.jetbrains.php.lang.psi.elements.PhpClass;
+import com.jetbrains.php.lang.psi.elements.PhpClassMember;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.uniteller.phpstorm.plugin.ts.service.Config;
@@ -14,6 +22,7 @@ import ru.uniteller.phpstorm.plugin.ts.util.PhpDocUtil;
 import ru.uniteller.phpstorm.plugin.ts.util.PhpIndexUtil;
 import ru.uniteller.phpstorm.plugin.ts.util.TestStandNavigationUtil;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -168,8 +177,55 @@ public class ChangeCommandParamFactory {
         }
     }
 
+    @Nullable private ArrayList<PhpClass> findSearchCriteriaSource(Parameter param, Method method) {
+        if (null == method.getDocComment()) {
+            return null;
+        }
+        @NotNull PhpDocTag[] seeCollection = method.getDocComment().getTagElementsByName("@see");
 
-    public NamedNode paramFactory(ChangeDomainCommand pNode, Parameter param) {
+        ArrayList<PhpDocTag> sourceSeeTags = new ArrayList<>();
+        for (PhpDocTag see: seeCollection) {
+            Matcher mathRes = config.getPatternSearchCriteria().matcher(see.getTagValue());
+            if (mathRes.find()) {
+                String targetParamName = mathRes.group(config.getSearchCriteriaGroupName());
+                if (param.getName().toString().equals(targetParamName)) {
+                    @Nullable PhpDocRef phpDocRef = PsiTreeUtil.getStubChildOfType(see, PhpDocRef.class);
+                    if (null == phpDocRef) {
+                        continue;
+                    }
+                    @NotNull Collection<PhpDocLinkResolver.Result> resolvers = PhpDocLinkResolver.resolve(phpDocRef.getText(), see);
+                    for (PhpDocLinkResolver.Result resolver: resolvers) {
+                        @Nullable PhpClassMember member = resolver.getMember();
+                        if (member instanceof Method) {
+
+                        }
+                    }
+
+
+
+
+
+
+                    sourceSeeTags.add(see);
+                }
+            }
+        }
+
+
+
+        return null;
+    }
+
+
+    public NamedNode paramFactory(ChangeDomainCommand pNode, Parameter param, Method method) {
+        ArrayList<PhpClass> searchCriteriaSource = findSearchCriteriaSource(param, method);
+        if (null != searchCriteriaSource) {
+
+        }
+
+
+
+
         @Nullable String paramExtName = buildExtName(param);
         @Nullable String paramDescription = null;
 

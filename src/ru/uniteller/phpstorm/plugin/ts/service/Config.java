@@ -21,6 +21,19 @@ public class Config {
      * Шаблон для получения имени субъекта и объекта из FQN объекта
      */
     private Pattern patternObjInfo = Pattern.compile("\\\\TestSrv\\\\Subject\\\\(?<SUBJECT>.+)\\\\Object\\\\(?<OBJ>.+)");
+
+    /**
+     * Имя групыы из шаблона patternSearchCriteria (@see ru.uniteller.phpstorm.plugin.ts.service.Config#patternSearchCriteria)
+     * для получения имени аргумента метода для которого в see док блоке описывается интерфейс с данными о возможных
+     * значениях
+     */
+    private String searchCriteriaGroupName = "CRITERIA";
+
+    /**
+     * Шаблон для имени для критерия поиска
+     */
+    private Pattern patternSearchCriteria = Pattern.compile(" *- *значени[яе] +для +\\$(?<CRITERIA>.+) *");
+
     /**
      * Имя интерфеса который должны реализовывать все субъекты
      */
@@ -88,5 +101,21 @@ public class Config {
      */
     public Pattern getPatternObjInfo() {
         return patternObjInfo;
+    }
+
+    /**
+     * Имя групыы из шаблона patternSearchCriteria (@see ru.uniteller.phpstorm.plugin.ts.service.Config#patternSearchCriteria)
+     * для получения имени аргумента метода для которого в see док блоке описывается интерфейс с данными о возможных
+     * значениях
+     */
+    public String getSearchCriteriaGroupName() {
+        return searchCriteriaGroupName;
+    }
+
+    /**
+     * Шаблон для имени для критерия поиска
+     */
+    public Pattern getPatternSearchCriteria() {
+        return patternSearchCriteria;
     }
 }
