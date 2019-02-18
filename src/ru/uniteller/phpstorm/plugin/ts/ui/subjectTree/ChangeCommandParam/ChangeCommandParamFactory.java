@@ -174,13 +174,13 @@ public class ChangeCommandParamFactory {
         }
     }
 
-    @Nullable private ArrayList<PhpClass> findSearchCriteriaSource(Parameter param, Method method) {
+    @Nullable private HashSet<String> findSearchCriteriaSource(Parameter param, Method method) {
         if (null == method.getDocComment()) {
             return null;
         }
         @NotNull PhpDocTag[] seeCollection = method.getDocComment().getTagElementsByName("@see");
 
-        ArrayList<PhpClass> sourcePhpClasses = new ArrayList<>();
+        HashSet<String> sourcePhpClasses = new HashSet<>();
         for (PhpDocTag see: seeCollection) {
             Matcher mathRes = config.getPatternSearchCriteria().matcher(see.getTagValue());
             if (mathRes.find()) {
@@ -193,8 +193,8 @@ public class ChangeCommandParamFactory {
                     @NotNull Collection<PhpDocLinkResolver.Result> resolvers = PhpDocLinkResolver.resolve(phpDocRef.getText(), see);
                     for (PhpDocLinkResolver.Result resolver: resolvers) {
                         @Nullable PhpClass phpClass = resolver.getPhpClass();
-                        if (phpClass != null) {
-                            sourcePhpClasses.add(phpClass);
+                        if (phpClass != null && phpClass.isInterface() && phpClass.getFields().size() > 0) {
+                            sourcePhpClasses.add(phpClass.getFQN());
                         }
                     }
                 }
@@ -206,9 +206,10 @@ public class ChangeCommandParamFactory {
 
 
     public NamedNode paramFactory(ChangeDomainCommand pNode, Parameter param, Method method) {
-        ArrayList<PhpClass> searchCriteriaSource = findSearchCriteriaSource(param, method);
+        HashSet<String> searchCriteriaSource = findSearchCriteriaSource(param, method);
         if (null != searchCriteriaSource) {
-
+            TestStandNavigationUtil.MethodParam methodParam = TestStandNavigationUtil.createMethodParam(param);
+            return new SearchCriteriaParam(pNode, methodParam, searchCriteriaSource);
         }
 
 
