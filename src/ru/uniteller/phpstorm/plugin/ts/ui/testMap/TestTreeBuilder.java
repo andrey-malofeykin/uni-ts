@@ -12,17 +12,37 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.uniteller.phpstorm.plugin.ts.service.Config;
 
-public class TestTreeBuilder {
+import java.util.HashMap;
 
+public class TestTreeBuilder {
+    private class Tab {
+        private String name;
+        private DevType devType;
+        Tab(String name, DevType devType) {
+            this.name = name;
+            this.devType = devType;
+        }
+        String getName() {
+            return name;
+        }
+        DevType getDevType() {
+            return devType;
+        }
+    }
     private class DevType {
         private String name;
+        private HashMap<String, Tab> tabs = new HashMap<>();
         DevType(String name) {
             this.name = name;
         }
         String getName() {
             return name;
         }
-
+        void addTab(Tab tab) {
+            if (!tabs.containsKey(tab.getName())) {
+                tabs.put(tab.getName(), tab);
+            }
+        }
     }
 
 
