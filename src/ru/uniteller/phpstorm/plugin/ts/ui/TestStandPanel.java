@@ -36,12 +36,12 @@ public class TestStandPanel extends JBTabbedPane implements DataProvider {
     private Project project;
     private Config config;
 
-    private SubjectsTreeStructure treeStructure;
-    private JEditorPane docPanel;
-    private SimpleTree myTree;
+    private SubjectsTreeStructure subjectsTreeStructure;
+    private JEditorPane subjectDocPanel;
+    private SimpleTree subjectTree;
 
     private boolean isInitViewComponent() {
-        return null != treeStructure && null != docPanel && null != myTree;
+        return null != subjectsTreeStructure && null != subjectDocPanel && null != subjectTree;
     }
 
     public TestStandPanel(Project project, Config config) {
@@ -51,24 +51,33 @@ public class TestStandPanel extends JBTabbedPane implements DataProvider {
 
         this.add("Субъекты/Объекты/Команды", this.buildSubjectPanel());
 
-        Tree tree1 = new Tree();
-        this.add("Тесты", tree1);
+
+        this.add("Тесты", buildTestPanel());
         Tree tree2 = new Tree();
         this.add("Библиотеки", tree2);
     }
 
+    private JComponent buildTestPanel() {
+        Tree tree = new Tree();
+        new TestMapStructure(project, config, tree);
+        subjectTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+
+        return tree;
+    }
+
+
 
     private JComponent buildSubjectPanel() {
-        docPanel = SwingHelper.createHtmlViewer(true, null, JBColor.WHITE, JBColor.BLACK);
+        subjectDocPanel = SwingHelper.createHtmlViewer(true, null, JBColor.WHITE, JBColor.BLACK);
 
-        myTree = new SimpleTree();
-        treeStructure = new SubjectsTreeStructure(project, config, myTree);
+        subjectTree = new SimpleTree();
+        subjectsTreeStructure = new SubjectsTreeStructure(project, config, subjectTree);
 
         //Меню пока не используется. На будущее.
-        myTree.addMouseListener(new PopupHandler() {
+        subjectTree.addMouseListener(new PopupHandler() {
             @Override
             public void invokePopup(final Component comp, final int x, final int y) {
-                final String id = getMenuId(SubjectsTreeStructure.getSelectedNodes(myTree, NamedNode.class));
+                final String id = getMenuId(SubjectsTreeStructure.getSelectedNodes(subjectTree, NamedNode.class));
                 if (id != null) {
                     final ActionGroup actionGroup = (ActionGroup) actionManager.getAction(id);
                     if (actionGroup != null) {
@@ -98,24 +107,24 @@ public class TestStandPanel extends JBTabbedPane implements DataProvider {
 
 
 
-        myTree.addMouseListener(new MouseEventAdapter<Void>(null) {
+        subjectTree.addMouseListener(new MouseEventAdapter<Void>(null) {
             public void mousePressed(MouseEvent e) {
-                int selRow = myTree.getRowForLocation(e.getX(), e.getY());
+                int selRow = subjectTree.getRowForLocation(e.getX(), e.getY());
                 if(selRow != -1 && e.getClickCount() == 2) {
-                    handleDoubleClickOrEnter(myTree);
+                    handleDoubleClickOrEnter(subjectTree);
                 }
             }
         });
-        myTree.addKeyListener(new KeyAdapter() {
+        subjectTree.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER
-                        && !myTree.isSelectionEmpty()
-                        && null != myTree.getSelectionPaths()
-                        && myTree.getSelectionPaths().length == 1
+                        && !subjectTree.isSelectionEmpty()
+                        && null != subjectTree.getSelectionPaths()
+                        && subjectTree.getSelectionPaths().length == 1
 
                 ) {
-                    handleDoubleClickOrEnter(myTree);
+                    handleDoubleClickOrEnter(subjectTree);
                 }
             }
         });
@@ -123,8 +132,8 @@ public class TestStandPanel extends JBTabbedPane implements DataProvider {
 
 
 
-        myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
-        myTree.addTreeSelectionListener(e -> {
+        subjectTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+        subjectTree.addTreeSelectionListener(e -> {
             if (!(e.getPath().getLastPathComponent() instanceof DefaultMutableTreeNode)) {
                 return;
             }
@@ -133,21 +142,21 @@ public class TestStandPanel extends JBTabbedPane implements DataProvider {
 
             boolean needDefaultAction = true;
             if (userObj instanceof DescriptionProvider) {
-                docPanel.setText(((DescriptionProvider) userObj).getDescriptionSource());
+                subjectDocPanel.setText(((DescriptionProvider) userObj).getDescriptionSource());
                 needDefaultAction = false;
             }
 
             if (needDefaultAction) {
-                docPanel.setText("");
+                subjectDocPanel.setText("");
             }
         });
 
-        myTree.setRootVisible(true);
+        subjectTree.setRootVisible(true);
 
         return new JSplitPane(
                 JSplitPane.VERTICAL_SPLIT,
-                ScrollPaneFactory.createScrollPane(myTree),
-                ScrollPaneFactory.createScrollPane(docPanel)
+                ScrollPaneFactory.createScrollPane(subjectTree),
+                ScrollPaneFactory.createScrollPane(subjectDocPanel)
         );
     }
 
@@ -162,7 +171,7 @@ public class TestStandPanel extends JBTabbedPane implements DataProvider {
         }
         NamedNode node = nodes.iterator().next();
         if (node instanceof ExpandTreeNodeProvider) {
-            expandTreeNodeHandler((ExpandTreeNodeProvider)node, treeStructure, docPanel);
+            expandTreeNodeHandler((ExpandTreeNodeProvider)node, subjectsTreeStructure, subjectDocPanel);
         }
     }
 
@@ -203,9 +212,9 @@ public class TestStandPanel extends JBTabbedPane implements DataProvider {
     }
 
     private <T extends NamedNode> List<T> getSelectedNodes(Class<T> aClass) {
-        if (null == myTree) {
+        if (null == subjectTree) {
             return (List<T>) new ArrayList<NamedNode>();
         }
-        return SubjectsTreeStructure.getSelectedNodes(myTree, aClass);
+        return SubjectsTreeStructure.getSelectedNodes(subjectTree, aClass);
     }
 }

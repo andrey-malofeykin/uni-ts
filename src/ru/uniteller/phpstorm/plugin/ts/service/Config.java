@@ -7,6 +7,11 @@ import java.util.regex.Pattern;
  */
 public class Config {
     /**
+     * Интерфейс которые реализуют все тесты из TS 2.0
+     */
+    private String testInterfaceFQN = "\\TestSrv\\Lib\\TestEngine\\TestInterface";
+
+    /**
      * Имя группы в шаблоне для получения имени субъекта
      * @see Config#patternObjInfo
      */
@@ -117,5 +122,12 @@ public class Config {
      */
     public Pattern getPatternSearchCriteria() {
         return patternSearchCriteria;
+    }
+
+    /**
+     * Интерфейс которые реализуют все тесты из TS 2.0
+     */
+    public String getTestInterfaceFQN() {
+        return testInterfaceFQN;
     }
 }
