@@ -3,73 +3,112 @@ package ru.uniteller.phpstorm.plugin.ts.ui.testMap;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.php.PhpIndex;
-import com.jetbrains.php.lang.psi.elements.*;
+import com.jetbrains.php.lang.psi.elements.ArrayCreationExpression;
+import com.jetbrains.php.lang.psi.elements.Field;
+import com.jetbrains.php.lang.psi.elements.PhpPsiElement;
+import com.jetbrains.php.lang.psi.elements.StringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.uniteller.phpstorm.plugin.ts.service.Config;
+import ru.uniteller.phpstorm.plugin.ts.ui.testMap.presentation.General;
+import ru.uniteller.phpstorm.plugin.ts.util.PhpPsiUtil;
 
 import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class TestTreeBuilder {
-    private class Tab {
+    public class Tab {
         private String name;
+
         Tab(String name) {
             this.name = name;
         }
-        String getName() {
+
+        public String getName() {
             return name;
         }
     }
-    private class DevType {
+
+    public class DevType {
         private String name;
+
         DevType(String name) {
             this.name = name;
         }
-        String getName() {
+
+        public String getName() {
             return name;
         }
     }
-    private class MetaTest {
+
+    public class MetaTest {
         private String name;
         private String testLinkId;
+        private String presentationName;
+
         MetaTest(String name, String testLinkId) {
             this.name = name;
             this.testLinkId = testLinkId;
+            this.presentationName = null != testLinkId ? "(" + testLinkId + ")" + name : name;
         }
-        String getName() {
+
+        public String getName() {
             return name;
         }
 
-        String getTestLinkId() {
+        public String getTestLinkId() {
             return testLinkId;
         }
+
+        public String getPresentationName() {
+            return presentationName;
+        }
     }
-    private class Column {
+
+    public class Column {
         private String name;
+
         Column(String name) {
             this.name = name;
         }
+
         String getName() {
             return name;
         }
     }
-    private class TestTemplate {
+
+    public class TestTemplate {
         private MetaTest metaTest;
         private Column column;
         private String columnValue;
+        private String presentationName;
+
         TestTemplate(MetaTest metaTest, Column column, String columnValue) {
             this.metaTest = metaTest;
             this.column = column;
             this.columnValue = columnValue;
+
+            this.presentationName = column.getName();
+            if (null != columnValue){
+                this.presentationName = this.presentationName + "(" + columnValue + ")";
+            }
+
         }
+
         MetaTest getMetaTest() {
             return metaTest;
         }
+
         Column getColumn() {
             return column;
         }
+
         String getColumnValue() {
             return columnValue;
+        }
+
+        public String getPresentationName() {
+            return  presentationName;
         }
     }
 
@@ -80,13 +119,10 @@ public class TestTreeBuilder {
     private HashMap<String, Column> columnIndex = new HashMap<>();
 
 
-
     private Project project;
     private Config config;
     private NamedNode root;
     private PhpIndex phpIndex;
-
-
 
 
     public TestTreeBuilder(Project project, Config config, NamedNode root) {
@@ -97,106 +133,109 @@ public class TestTreeBuilder {
     }
 
     private void dispatchMetadata(@NotNull ArrayCreationExpression metadata) {
-        for (ArrayHashElement hashElement: metadata.getHashElements()) {
-            @Nullable String devTypeStr = extractStr(hashElement.getKey());
+        metadata.getHashElements().forEach(metadataItem -> {
+            @Nullable String devTypeStr = extractStr(metadataItem.getKey());
             if (null == devTypeStr) {
-                continue;
+                return;
             }
             devTypeIndex.putIfAbsent(devTypeStr, new DevType(devTypeStr));
             @NotNull DevType devType = devTypeIndex.get(devTypeStr);
             generalIndex.putIfAbsent(devType, new HashMap<>());
 
-
-
-            @Nullable PhpPsiElement devTests = hashElement.getValue();
+            @Nullable PhpPsiElement devTests = metadataItem.getValue();
             if (!(devTests instanceof ArrayCreationExpression)) {
-                continue;
+                return;
             }
 
-            for (ArrayHashElement tabTests: ((ArrayCreationExpression) devTests).getHashElements()) {
+            ((ArrayCreationExpression) devTests).getHashElements().forEach(tabTests->{
                 @Nullable String tabName = extractStr(tabTests.getKey());
                 if (null == tabName) {
-                    continue;
+                    return;
                 }
-                tabIndex.putIfAbsent(tabName,  new Tab(tabName));
+                tabIndex.putIfAbsent(tabName, new Tab(tabName));
                 @NotNull Tab tab = tabIndex.get(tabName);
                 generalIndex.get(devType).putIfAbsent(tab, new HashMap<>());
 
 
-                @Nullable PhpPsiElement metaTestCollection = tabTests.getValue();
-                if (!(metaTestCollection instanceof ArrayCreationExpression)) {
-                    continue;
+                @Nullable PhpPsiElement metaTestCollectionNode = tabTests.getValue();
+                if (!(metaTestCollectionNode instanceof ArrayCreationExpression)) {
+                    return;
                 }
-                for (ArrayHashElement metaTestConfig: ((ArrayCreationExpression) metaTestCollection).getHashElements()) {
-                    if (!(metaTestConfig instanceof ArrayCreationExpression)) {
-                        continue;
-                    }
-                    String metaTestDescription = null;
-                    String metaTestTestLink = null;
-                    ArrayCreationExpression metaTestColumns = null;
-                    for (ArrayHashElement metaTestElement: ((ArrayCreationExpression) metaTestConfig).getHashElements()) {
+                PhpPsiUtil.iterateArrayOfArray(metaTestCollectionNode, metaTestInfo->{
+                    AtomicReference<String> metaTestDescription = new AtomicReference<>(null);
+                    AtomicReference<String> metaTestTestLink = new AtomicReference<>(null);
+                    AtomicReference<ArrayCreationExpression> metaTestColumnsNode = new AtomicReference<>(null);
+
+                    metaTestInfo.getHashElements().forEach(metaTestElement->{
                         String metaTestElementKey = extractStr(metaTestElement.getKey());
                         if (null != metaTestElementKey && metaTestElementKey.equals("description")) {
                             String candidateMetaTestDescription = extractStr(metaTestElement.getValue());
                             if (null != candidateMetaTestDescription) {
-                                metaTestDescription = candidateMetaTestDescription;
+                                metaTestDescription.set(candidateMetaTestDescription);
                             }
                         }
                         if (null != metaTestElementKey && metaTestElementKey.equals("testLink")) {
                             String candidateMetaTestTestLink = extractStr(metaTestElement.getValue());
                             if (null != candidateMetaTestTestLink) {
-                                metaTestTestLink = candidateMetaTestTestLink;
+                                metaTestTestLink.set(candidateMetaTestTestLink);
                             }
                         }
                         if (null != metaTestElementKey && metaTestElementKey.equals("columns")) {
                             if (metaTestElement.getValue() instanceof ArrayCreationExpression) {
-                                metaTestColumns = (ArrayCreationExpression)metaTestElement.getValue();
+                                metaTestColumnsNode.set((ArrayCreationExpression) metaTestElement.getValue());
                             }
                         }
-                    }
-                    MetaTest metaTest = null;
-                    if (null != metaTestDescription) {
-                        metaTestIndex.putIfAbsent(metaTestDescription,  new MetaTest(metaTestDescription, metaTestTestLink));
-                        metaTest = metaTestIndex.get(metaTestDescription);
-                        generalIndex.get(devType).get(tab).putIfAbsent(metaTest, new HashMap<>());
-                    }
-                    if (null != metaTestColumns) {
-                        String columnName = null;
-                        String columnValue = null;
+                    });
 
-                        for (ArrayHashElement column: metaTestColumns.getHashElements()) {
-                            String columnKey = extractStr(column.getKey());
-                            if (null != columnKey && columnKey.equals("columnName")) {
-                                String candidateColumnName = extractStr(column.getValue());
-                                if (null != candidateColumnName) {
-                                    columnName = candidateColumnName;
+                    AtomicReference<MetaTest> metaTest = new AtomicReference<>();
+                    if (null != metaTestDescription.get()) {
+                        metaTestIndex.putIfAbsent(metaTestDescription.get(), new MetaTest(metaTestDescription.get(), metaTestTestLink.get()));
+                        metaTest.set(metaTestIndex.get(metaTestDescription.get()));
+                        generalIndex.get(devType).get(tab).putIfAbsent(metaTest.get(), new HashMap<>());
+                    }
+                    if (null != metaTestColumnsNode.get()) {
+
+                        PhpPsiUtil.iterateArrayOfArray(metaTestColumnsNode.get(), columnNode-> {
+                            AtomicReference<String> columnName = new AtomicReference<>(null);
+                            AtomicReference<String> columnValue = new AtomicReference<>(null);
+
+                            columnNode.getHashElements().forEach(column->{
+                                String columnKey = extractStr(column.getKey());
+                                if (null != columnKey && columnKey.equals("columnName")) {
+                                    String candidateColumnName = extractStr(column.getValue());
+                                    if (null != candidateColumnName) {
+                                        columnName.set(candidateColumnName);
+                                    }
+                                }
+                                if (null != columnKey && columnKey.equals("columnValue")) {
+                                    String candidateColumnValue = extractStr(column.getValue());
+                                    if (null != candidateColumnValue) {
+                                        columnValue.set(candidateColumnValue);
+                                    }
+                                }
+                            });
+                            if (null != columnName.get()) {
+                                columnIndex.putIfAbsent(columnName.get(), new Column(columnName.get()));
+                                @NotNull Column column = columnIndex.get(columnName.get());
+                                if (null != metaTest.get()) {
+                                    TestTemplate testTemplate = new TestTemplate(metaTest.get(), column, columnValue.get());
+                                    generalIndex.get(devType).get(tab).get(metaTest.get()).putIfAbsent(column, testTemplate);
                                 }
                             }
-                            if (null != columnKey && columnKey.equals("columnValue")) {
-                                String candidateColumnValue = extractStr(column.getValue());
-                                if (null != candidateColumnValue) {
-                                    columnValue = candidateColumnValue;
-                                }
-                            }
 
-                        }
 
-                        if (null != columnName) {
-                            columnIndex.putIfAbsent(columnName, new Column(columnName));
-                            @NotNull Column column = columnIndex.get(columnName);
-                            if (null != metaTest) {
-                                TestTemplate testTemplate = new TestTemplate(metaTest, column, columnValue);
-                                generalIndex.get(devType).get(tab).get(metaTest).putIfAbsent(column,  testTemplate);
-                            }
-                        }
+
+                        });
+
                     }
-                }
-            }
+                });
+            });
+        });
 
-        }
     }
 
-    @Nullable private String extractStr(PsiElement element) {
+    @Nullable
+    private String extractStr(PsiElement element) {
         if (element instanceof Field) {
             @Nullable PsiElement value = ((Field) element).getDefaultValue();
             return extractStr(value);
@@ -216,41 +255,36 @@ public class TestTreeBuilder {
 
 
     private void buildIndex() {
-        phpIndex.getInterfacesByFQN(config.getTestInterfaceFQN()).forEach(testInterface -> {
-            phpIndex.getAllSubclasses(testInterface.getFQN()).forEach(testClass -> {
-                if (testClass.isAbstract() || testClass.isInterface()) {
-                    return;
-                }
-                @Nullable Field metadataField = testClass.findFieldByName("metadata", false);
-                if (null == metadataField
-                        || !metadataField.isValid()
-                        ||  !metadataField.getModifier().isProtected()
-                        ||  !metadataField.getModifier().isStatic()
-                        || null == metadataField.getDefaultValue()
-                        || null == metadataField.getDefaultValue()
-                ) {
-                    return;
-                }
-                PsiElement metadataFieldValue = metadataField.getDefaultValue();
-                if (!metadataFieldValue.isValid() || !(metadataFieldValue instanceof ArrayCreationExpression)) {
-                    return;
-                }
+        phpIndex.getInterfacesByFQN(config.getTestInterfaceFQN()).forEach(testInterface -> phpIndex.getAllSubclasses(testInterface.getFQN()).forEach(testClass -> {
+            if (testClass.isAbstract() || testClass.isInterface()) {
+                return;
+            }
+            @Nullable Field metadataField = testClass.findFieldByName("metadata", false);
+            if (null == metadataField
+                    || !metadataField.isValid()
+                    || !metadataField.getModifier().isProtected()
+                    || !metadataField.getModifier().isStatic()
+                    || null == metadataField.getDefaultValue()
+                    || null == metadataField.getDefaultValue()
+            ) {
+                return;
+            }
+            PsiElement metadataFieldValue = metadataField.getDefaultValue();
+            if (!metadataFieldValue.isValid() || !(metadataFieldValue instanceof ArrayCreationExpression)) {
+                return;
+            }
 
-                dispatchMetadata((ArrayCreationExpression)metadataFieldValue);
+            dispatchMetadata((ArrayCreationExpression) metadataFieldValue);
 
-            });
-        });
+        }));
     }
-
 
 
     public NamedNode[] build() {
         buildIndex();
 
 
-
-
-        return new NamedNode[0];
+        return (new General(generalIndex, project, config)).build();
     }
 
 

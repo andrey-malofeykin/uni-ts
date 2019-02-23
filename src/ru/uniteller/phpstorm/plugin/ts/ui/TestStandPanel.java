@@ -60,9 +60,9 @@ public class TestStandPanel extends JBTabbedPane implements DataProvider {
     private JComponent buildTestPanel() {
         Tree tree = new Tree();
         new TestMapStructure(project, config, tree);
-        subjectTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+        tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 
-        return tree;
+        return ScrollPaneFactory.createScrollPane(tree);
     }
 
 
