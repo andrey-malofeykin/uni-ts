@@ -12,11 +12,13 @@ import org.jetbrains.annotations.Nullable;
 import ru.uniteller.phpstorm.plugin.ts.service.Config;
 import ru.uniteller.phpstorm.plugin.ts.ui.testMap.presentation.General;
 import ru.uniteller.phpstorm.plugin.ts.util.PhpPsiUtil;
+import ru.uniteller.phpstorm.plugin.ts.util.TestStandNavigationUtil;
 
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class TestTreeBuilder {
+
     public class Tab {
         private String name;
 
@@ -29,7 +31,7 @@ public class TestTreeBuilder {
         }
     }
 
-    public class DevType {
+    public class DevType{
         private String name;
 
         DevType(String name) {
@@ -117,7 +119,7 @@ public class TestTreeBuilder {
     private HashMap<String, Tab> tabIndex = new HashMap<>();
     private HashMap<String, MetaTest> metaTestIndex = new HashMap<>();
     private HashMap<String, Column> columnIndex = new HashMap<>();
-
+    private HashMap<Object, TestStandNavigationUtil.ClassMemberArrayElement> navigateStorage = new HashMap<>();
 
     private Project project;
     private Config config;
@@ -132,12 +134,17 @@ public class TestTreeBuilder {
         this.phpIndex = project.getComponent(PhpIndex.class);
     }
 
-    private void dispatchMetadata(@NotNull ArrayCreationExpression metadata) {
+    private void dispatchMetadata(@NotNull ArrayCreationExpression metadata, TestStandNavigationUtil.ClassField classFieldNavigate) {
         metadata.getHashElements().forEach(metadataItem -> {
             @Nullable String devTypeStr = extractStr(metadataItem.getKey());
             if (null == devTypeStr) {
                 return;
             }
+
+            AtomicReference<String> pathToArrayElement = new AtomicReference<>(devTypeStr);
+
+
+
             devTypeIndex.putIfAbsent(devTypeStr, new DevType(devTypeStr));
             @NotNull DevType devType = devTypeIndex.get(devTypeStr);
             generalIndex.putIfAbsent(devType, new HashMap<>());
@@ -152,6 +159,11 @@ public class TestTreeBuilder {
                 if (null == tabName) {
                     return;
                 }
+
+                pathToArrayElement.set(pathToArrayElement.get() + "." + tabName);
+
+
+
                 tabIndex.putIfAbsent(tabName, new Tab(tabName));
                 @NotNull Tab tab = tabIndex.get(tabName);
                 generalIndex.get(devType).putIfAbsent(tab, new HashMap<>());
@@ -188,10 +200,19 @@ public class TestTreeBuilder {
                     });
 
                     AtomicReference<MetaTest> metaTest = new AtomicReference<>();
+                    AtomicReference<String> metaTestNavigatePath = new AtomicReference<>();
                     if (null != metaTestDescription.get()) {
+                        metaTestNavigatePath.set(pathToArrayElement.get() + ".[@description=\"" + metaTestDescription.get() + "\"]");
+                        TestStandNavigationUtil.ClassMemberArrayElement metaTestNavigate = new TestStandNavigationUtil.ClassMemberArrayElement(
+                                classFieldNavigate,
+                                pathToArrayElement.toString()
+                        );
+
                         metaTestIndex.putIfAbsent(metaTestDescription.get(), new MetaTest(metaTestDescription.get(), metaTestTestLink.get()));
                         metaTest.set(metaTestIndex.get(metaTestDescription.get()));
+                        navigateStorage.put(metaTest.get(), metaTestNavigate);
                         generalIndex.get(devType).get(tab).putIfAbsent(metaTest.get(), new HashMap<>());
+
                     }
                     if (null != metaTestColumnsNode.get()) {
 
@@ -215,16 +236,21 @@ public class TestTreeBuilder {
                                 }
                             });
                             if (null != columnName.get()) {
+                                String pathToColumn = metaTestNavigatePath + ".columns.[@columnName=\"" + columnName.get() + "\"].columnName";
+                                TestStandNavigationUtil.ClassMemberArrayElement columnNavigate = new TestStandNavigationUtil.ClassMemberArrayElement(
+                                        classFieldNavigate,
+                                        pathToColumn
+                                );
+
                                 columnIndex.putIfAbsent(columnName.get(), new Column(columnName.get()));
                                 @NotNull Column column = columnIndex.get(columnName.get());
+                                navigateStorage.put(column, columnNavigate);
                                 if (null != metaTest.get()) {
                                     TestTemplate testTemplate = new TestTemplate(metaTest.get(), column, columnValue.get());
                                     generalIndex.get(devType).get(tab).get(metaTest.get()).putIfAbsent(column, testTemplate);
+                                    navigateStorage.put(testTemplate, columnNavigate);
                                 }
                             }
-
-
-
                         });
 
                     }
@@ -274,7 +300,12 @@ public class TestTreeBuilder {
                 return;
             }
 
-            dispatchMetadata((ArrayCreationExpression) metadataFieldValue);
+            TestStandNavigationUtil.ClassField classFieldNavigate = new TestStandNavigationUtil.ClassField(
+                    metadataField.getName(),
+                    new TestStandNavigationUtil.ClassFQN(testClass.getFQN())
+            );
+
+            dispatchMetadata((ArrayCreationExpression) metadataFieldValue, classFieldNavigate);
 
         }));
     }
@@ -284,7 +315,7 @@ public class TestTreeBuilder {
         buildIndex();
 
 
-        return (new General(generalIndex, project, config)).build();
+        return (new General(generalIndex, navigateStorage, project, config)).build();
     }
 
 

@@ -59,6 +59,20 @@ public class TestStandNavigationUtil {
         }
     }
 
+    final static public class ClassMemberArrayElement extends NavigationSourceItem {
+        private ClassMember member;
+        public ClassMemberArrayElement(@NotNull ClassMember member, String pathToArrayElement) {
+            super(pathToArrayElement);
+            this.member = member;
+        }
+
+        public ClassMember getMember() {
+            return member;
+        }
+    }
+
+
+
     final static public class ClassMethod extends ClassMember {
         public ClassMethod(@NotNull String value, @NotNull ClassFQN classFQN) {
             super(value, classFQN);
@@ -302,6 +316,38 @@ public class TestStandNavigationUtil {
 
 
                 navigate(project, phpClass.getContainingFile().getVirtualFile(), targetParam.getTextOffset() , true);
+            }
+        };
+    }
+
+    public static @Nullable Navigatable createNavigatable(@Nullable Project project, @Nullable ClassMemberArrayElement param) {
+        if (null == project || null == param) {
+            return null;
+        }
+        return new NavigatableAdapter() {
+            @Override
+            public void navigate(boolean requestFocus) {
+                @NotNull ClassFQN classFQN = param.getMember().getClassFQN();
+
+                @NotNull Collection<PhpClass> phpClassCollection = PhpIndex.getInstance(project).getAnyByFQN(classFQN.toString());
+                if (1 != phpClassCollection.size()) {
+                    return;
+                }
+                PhpClass phpClass = phpClassCollection.iterator().next();
+
+                if (null == phpClass.getDocComment()) {
+                    return;
+                }
+
+                boolean isConstant = param.getMember() instanceof ClassConst;
+                @Nullable Field field = phpClass.findFieldByName(param.getMember().toString(), isConstant);
+
+                if (null == field) {
+                    return;
+                }
+
+
+                navigate(project, phpClass.getContainingFile().getVirtualFile(), field.getTextOffset() , true);
             }
         };
     }

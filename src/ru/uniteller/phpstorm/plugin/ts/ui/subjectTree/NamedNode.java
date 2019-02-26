@@ -6,10 +6,11 @@ import com.intellij.ui.treeStructure.CachingSimpleNode;
 import com.jetbrains.php.PhpIndex;
 import org.jetbrains.annotations.Nullable;
 import ru.uniteller.phpstorm.plugin.ts.service.Config;
+import ru.uniteller.phpstorm.plugin.ts.ui.NavigatableInterface;
 
 import java.util.Objects;
 
-abstract public class NamedNode extends CachingSimpleNode{
+abstract public class NamedNode extends CachingSimpleNode implements NavigatableInterface {
     final protected Config config;
     final protected PhpIndex phpIndex;
     public NamedNode(NamedNode aParent, String name) {

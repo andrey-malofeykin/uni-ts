@@ -4,10 +4,7 @@ package ru.uniteller.phpstorm.plugin.ts.ui;
 import com.intellij.ide.util.treeView.IndexComparator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.treeStructure.SimpleNode;
-import com.intellij.ui.treeStructure.SimpleTree;
-import com.intellij.ui.treeStructure.SimpleTreeBuilder;
-import com.intellij.ui.treeStructure.SimpleTreeStructure;
+import com.intellij.ui.treeStructure.*;
 import org.jetbrains.annotations.NotNull;
 import ru.uniteller.phpstorm.plugin.ts.service.Config;
 import ru.uniteller.phpstorm.plugin.ts.ui.testMap.NamedNode;
@@ -50,21 +47,21 @@ public class TestMapStructure extends SimpleTreeStructure {
         return myRoot;
     }
 
-    static <T extends NamedNode> List<T> getSelectedNodes(SimpleTree tree, Class<T> nodeClass) {
-        final List<T> filtered = new ArrayList<>();
-        for (SimpleNode node : getSelectedNodes(tree)) {
-            if ((nodeClass != null) && (!nodeClass.isInstance(node))) {
+    static  List<SimpleNode> getSelectedNodes(SimpleTree tree) {
+        final List<SimpleNode> filtered = new ArrayList<>();
+        for (SimpleNode node : buildSelectedNodes(tree)) {
+            if (!(node instanceof NamedNode)) {
                 filtered.clear();
                 break;
             }
-            //noinspection unchecked
-            filtered.add((T)node);
+
+            filtered.add(node);
         }
         return filtered;
     }
 
 
-    private static List<SimpleNode> getSelectedNodes(SimpleTree tree) {
+    private static List<SimpleNode> buildSelectedNodes(SimpleTree tree) {
         List<SimpleNode> nodes = new ArrayList<>();
         TreePath[] treePaths = tree.getSelectionPaths();
         if (treePaths != null) {

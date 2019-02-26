@@ -4,10 +4,7 @@ package ru.uniteller.phpstorm.plugin.ts.ui;
 import com.intellij.ide.util.treeView.IndexComparator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.treeStructure.SimpleNode;
-import com.intellij.ui.treeStructure.SimpleTree;
-import com.intellij.ui.treeStructure.SimpleTreeBuilder;
-import com.intellij.ui.treeStructure.SimpleTreeStructure;
+import com.intellij.ui.treeStructure.*;
 import org.jetbrains.annotations.NotNull;
 import ru.uniteller.phpstorm.plugin.ts.service.Config;
 import ru.uniteller.phpstorm.plugin.ts.ui.subjectTree.NamedNode;
@@ -54,7 +51,7 @@ public class SubjectsTreeStructure extends SimpleTreeStructure {
     }
 
 
-    static <T extends NamedNode> List<T> getSelectedNodes(SimpleTree tree, Class<T> nodeClass) {
+    static <T extends SimpleNode> List<T> getSelectedNodes(SimpleTree tree, Class<T> nodeClass) {
         final List<T> filtered = new ArrayList<>();
         for (SimpleNode node : getSelectedNodes(tree)) {
             if ((nodeClass != null) && (!nodeClass.isInstance(node))) {

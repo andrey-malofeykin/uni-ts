@@ -10,6 +10,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBTabbedPane;
+import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.MouseEventAdapter;
@@ -39,6 +40,7 @@ public class TestStandPanel extends JBTabbedPane implements DataProvider {
     private SubjectsTreeStructure subjectsTreeStructure;
     private JEditorPane subjectDocPanel;
     private SimpleTree subjectTree;
+    private SimpleTree testTree;
 
     private boolean isInitViewComponent() {
         return null != subjectsTreeStructure && null != subjectDocPanel && null != subjectTree;
@@ -58,11 +60,11 @@ public class TestStandPanel extends JBTabbedPane implements DataProvider {
     }
 
     private JComponent buildTestPanel() {
-        Tree tree = new Tree();
-        new TestMapStructure(project, config, tree);
-        tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+        testTree = new SimpleTree();
+        new TestMapStructure(project, config, testTree);
+        testTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 
-        return ScrollPaneFactory.createScrollPane(tree);
+        return ScrollPaneFactory.createScrollPane(testTree);
     }
 
 
@@ -198,23 +200,45 @@ public class TestStandPanel extends JBTabbedPane implements DataProvider {
 
     @Override
     public @Nullable Object getData(@NotNull String dataId) {
-        if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) return extractNavigatables();
+        if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+            return extractNavigatables();
+        }
         return null;
     }
 
     private Object extractNavigatables() {
         final List<Navigatable> navigatables = new ArrayList<>();
-        for (NamedNode each : getSelectedNodes(NamedNode.class)) {
-            Navigatable navigatable = each.getNavigatable();
-            if (navigatable != null) navigatables.add(navigatable);
+        for (SimpleNode each : getSelectedNodes()) {
+            if (each instanceof NavigatableInterface) {
+                Navigatable navigatable = ((NavigatableInterface)each).getNavigatable();
+                if (navigatable != null) {
+                    navigatables.add(navigatable);
+                }
+            }
+
         }
         return navigatables.isEmpty() ? null : navigatables.toArray(new Navigatable[0]);
     }
 
-    private <T extends NamedNode> List<T> getSelectedNodes(Class<T> aClass) {
-        if (null == subjectTree) {
-            return (List<T>) new ArrayList<NamedNode>();
+    private List<SimpleNode> getSelectedNodes() {
+        int index = getModel().getSelectedIndex();
+
+        if (-1 == index) {
+            return new ArrayList<>();
         }
-        return SubjectsTreeStructure.getSelectedNodes(subjectTree, aClass);
+        if (0 == index) {
+            if (null == subjectTree) {
+                return new ArrayList<>();
+            }
+            return SubjectsTreeStructure.getSelectedNodes(subjectTree, SimpleNode.class);
+        }
+        if (1 == index) {
+            if (null == testTree) {
+                return new ArrayList<>();
+            }
+            return TestMapStructure.getSelectedNodes(testTree);
+        }
+
+        return new ArrayList<>();
     }
 }

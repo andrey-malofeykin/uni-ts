@@ -1,10 +1,13 @@
 package ru.uniteller.phpstorm.plugin.ts.ui.testMap.presentation;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.Navigatable;
 import com.intellij.ui.treeStructure.SimpleNode;
+import org.jetbrains.annotations.Nullable;
 import ru.uniteller.phpstorm.plugin.ts.service.Config;
 import ru.uniteller.phpstorm.plugin.ts.ui.testMap.NamedNode;
 import ru.uniteller.phpstorm.plugin.ts.ui.testMap.TestTreeBuilder;
+import ru.uniteller.phpstorm.plugin.ts.util.TestStandNavigationUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,6 +30,7 @@ public class General {
 
     private class MetaTestNode extends NamedNode {
         private HashMap<TestTreeBuilder.Column, TestTreeBuilder.TestTemplate> child;
+        private TestStandNavigationUtil.ClassMemberArrayElement navigate = null;
         MetaTestNode(
                 NamedNode aParent,
                 TestTreeBuilder.MetaTest metaTest,
@@ -34,6 +38,10 @@ public class General {
         ) {
             super(aParent,  metaTest.getPresentationName());
             this.child = child;
+            if (navigateStorage.containsKey(metaTest)) {
+                navigate = navigateStorage.get(metaTest);
+            }
+
         }
 
         @Override
@@ -45,6 +53,11 @@ public class General {
 
 
             return nodes.toArray(new NamedNode[0]);
+        }
+
+        @Override
+        public @Nullable Navigatable getNavigatable() {
+            return null == navigate ? null : TestStandNavigationUtil.createNavigatable(getProject(), navigate);
         }
     }
 
@@ -76,12 +89,14 @@ public class General {
 
     private class DevTypeNode extends NamedNode {
         private HashMap<TestTreeBuilder.Tab, HashMap<TestTreeBuilder.MetaTest, HashMap<TestTreeBuilder.Column, TestTreeBuilder.TestTemplate>>> child;
+
         DevTypeNode(
                 TestTreeBuilder.DevType devType,
                 HashMap<TestTreeBuilder.Tab, HashMap<TestTreeBuilder.MetaTest, HashMap<TestTreeBuilder.Column, TestTreeBuilder.TestTemplate>>> child
         ) {
             super(General.this.project,General.this.config,  devType.getName());
             this.child = child;
+
         }
 
         @Override
@@ -94,6 +109,7 @@ public class General {
 
             return nodes.toArray(new NamedNode[0]);
         }
+
     }
 
 
@@ -101,15 +117,19 @@ public class General {
     private HashMap<TestTreeBuilder.DevType, HashMap<TestTreeBuilder.Tab, HashMap<TestTreeBuilder.MetaTest, HashMap<TestTreeBuilder.Column, TestTreeBuilder.TestTemplate>>>> generalIndex;
     private Config config;
     private Project project;
+    private HashMap<Object, TestStandNavigationUtil.ClassMemberArrayElement> navigateStorage;
 
     public General(
             HashMap<TestTreeBuilder.DevType, HashMap<TestTreeBuilder.Tab, HashMap<TestTreeBuilder.MetaTest, HashMap<TestTreeBuilder.Column, TestTreeBuilder.TestTemplate>>>> generalIndex,
+            HashMap<Object, TestStandNavigationUtil.ClassMemberArrayElement> navigateStorage,
             Project project,
             Config config
     ) {
         this.generalIndex = generalIndex;
         this.config = config;
         this.project = project;
+        this.navigateStorage = navigateStorage;
+
     }
 
     public NamedNode[] build() {
