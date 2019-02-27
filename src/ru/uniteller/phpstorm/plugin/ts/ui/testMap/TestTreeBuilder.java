@@ -205,7 +205,7 @@ public class TestTreeBuilder {
                         metaTestNavigatePath.set(pathToArrayElement.get() + ".[@description=\"" + metaTestDescription.get() + "\"]");
                         TestStandNavigationUtil.ClassMemberArrayElement metaTestNavigate = new TestStandNavigationUtil.ClassMemberArrayElement(
                                 classFieldNavigate,
-                                pathToArrayElement.toString()
+                                metaTestNavigatePath.get()
                         );
 
                         metaTestIndex.putIfAbsent(metaTestDescription.get(), new MetaTest(metaTestDescription.get(), metaTestTestLink.get()));
